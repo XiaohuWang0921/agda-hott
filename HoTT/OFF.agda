@@ -37,6 +37,7 @@ subsf₂ = subsf refl
 
 infixr 5 _$$_
 _$$_ : OFF m n → Fin m → Fin n
+[] $$ i = i
 n∷ f $$ i = suc (f $$ i)
 a∷ f $$ zero = zero
 a∷ f $$ suc i = f $$ i
