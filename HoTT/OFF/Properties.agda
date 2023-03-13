@@ -35,14 +35,6 @@ subsf-trans {_} {_} {suc _} {suc _} {_} {suc _} i≡k sj≡sl k≡m sl≡sn (n�
 subsf-trans {zero} {zero} {zero} {zero} {zero} {zero} _ _ _ _ [] = refl
 subsf-trans {suc _} {suc _} {suc _} {suc _} {suc _} {suc _} si≡sk j≡l sk≡sm l≡n (a∷ f) = cong a∷_ (subsf-trans (cong pred si≡sk) j≡l (cong pred sk≡sm) l≡n f)
 
-subsf-n∷ : ∀ (k≡m : k ≡ m) (l≡n : l ≡ n) f →
-           subsf k≡m (cong suc l≡n) (n∷ f) ≡ n∷ subsf k≡m l≡n f
-subsf-n∷ refl refl _ = refl
-
-subsf-a∷ : ∀ (k≡m : k ≡ m) (sl≡sn : suc l ≡ suc n) f →
-           subsf (cong suc k≡m) sl≡sn (a∷ f) ≡ a∷ subsf k≡m sl≡sn f
-subsf-a∷ refl refl _ = refl
-
 ∘-assoc : (f : OFF m n) (g : OFF l m) (h : OFF k l) → (f ∘ g) ∘ h ≡ f ∘ (g ∘ h)
 ∘-assoc [] _ _ = refl
 ∘-assoc (n∷ f) g h = cong n∷_ (∘-assoc f g h)
