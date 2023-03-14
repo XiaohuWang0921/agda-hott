@@ -138,3 +138,21 @@ stack-id-empty {suc m} = begin
   a∷ n∷ subsf (+-identityʳ m) refl (stack id empty) ≡⟨ cong (a∷_ ∘′ n∷_) stack-id-empty ⟩
   a∷ n∷ first m ≡⟨⟩
   first (suc m) ∎
+
+stack-id : stack (id {m}) (id {n}) ≡ id
+stack-id {zero} = refl
+stack-id {suc m} = cong (a∷_ ∘′ n∷_) (stack-id {m})
+
+stack-∘ : (f : OFF j k) (g : OFF i j) (f′ : OFF m n) (g′ : OFF l m) →
+          stack (f ∘ g) (f′ ∘ g′) ≡ stack f f′ ∘ stack g g′
+stack-∘ (n∷ f) g f′ g′ = cong n∷_ (stack-∘ f g f′ g′)
+stack-∘ [] [] _ _ = refl
+stack-∘ (a∷ f) (n∷ g) f′ g′ = stack-∘ f g f′ g′
+stack-∘ f @ (a∷ _) (a∷ g) f′ g′ = cong a∷_ (stack-∘ f g f′ g′)
+
+stack-stack : (f : OFF i j) (g : OFF k l) (h : OFF m n) →
+              subsf (+-assoc i k m) (+-assoc j l n) (stack (stack f g) h) ≡
+                                                     stack f (stack g h)
+stack-stack [] _ _ = refl
+stack-stack (n∷ f) g h = subsf-n∷ _ _ _ ∙ cong n∷_ (stack-stack f g h)
+stack-stack (a∷ f) g h = subsf-a∷ _ _ _ ∙ cong a∷_ (stack-stack f g h)
