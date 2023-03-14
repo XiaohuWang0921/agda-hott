@@ -131,3 +131,10 @@ first-∘ (a∷ f) g = cong a∷_ (first-∘ f g)
 stack-id-empty : subsf₁ (+-identityʳ m) (stack id empty) ≡ first {n} m
 stack-id-empty {zero} = subsf-refl empty
 stack-id-empty {suc m} = cong (a∷_ ∘′ n∷_) stack-id-empty
+
+stack-assoc : (f : OFF i j) (g : OFF k l) (h : OFF m n) →
+              subsf (+-assoc i k m) (+-assoc j l n) (stack (stack f g) h) ≡
+                                                     stack f (stack g h)
+stack-assoc [] g h = subsf-refl (stack g h)
+stack-assoc (n∷ f) g h = cong n∷_ (stack-assoc f g h)
+stack-assoc (a∷ f) g h = cong a∷_ (stack-assoc f g h)
