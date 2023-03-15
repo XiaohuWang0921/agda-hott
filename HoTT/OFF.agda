@@ -36,12 +36,6 @@ subsf₁ k≡m = subsf k≡m refl
 subsf₂ : .(l ≡ n) → OFF k l → OFF k n
 subsf₂ = subsf refl
 
-subsf₁ : k ≡ m → OFF k n → OFF m n
-subsf₁ = flip subsf refl
-
-subsf₂ : l ≡ n → OFF k l → OFF k n
-subsf₂ = subsf refl
-
 infixr 5 _$$_
 _$$_ : OFF m n → Fin m → Fin n
 [] $$ i = i
