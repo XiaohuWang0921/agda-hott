@@ -3,7 +3,7 @@
 module HoTT.OFF.Properties where
 
 open import Data.Nat.Base hiding (_≤_)
-open import Data.Fin.Base hiding (pred)
+open import Data.Fin.Base hiding (pred; _+_)
 open import Data.Nat.Properties hiding (suc-injective)
 open import Data.Fin.Properties using (suc-injective)
 open import HoTT.OFF
@@ -156,3 +156,8 @@ stack-stack : (f : OFF i j) (g : OFF k l) (h : OFF m n) →
 stack-stack [] _ _ = refl
 stack-stack (n∷ f) g h = subsf-n∷ _ _ _ ∙ cong n∷_ (stack-stack f g h)
 stack-stack (a∷ f) g h = subsf-a∷ _ _ _ ∙ cong a∷_ (stack-stack f g h)
+
+stack-subsf : ∀ {o p} (i≡m : i ≡ m) (j≡n : j ≡ n) (k≡o : k ≡ o) (l≡p : l ≡ p) f g →
+              stack (subsf i≡m j≡n f) (subsf k≡o l≡p g) ≡
+              subsf (cong₂ _+_ i≡m k≡o) (cong₂ _+_ j≡n l≡p) (stack f g)
+stack-subsf refl refl refl refl _ _ = refl
