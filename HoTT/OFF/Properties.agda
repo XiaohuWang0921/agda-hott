@@ -149,3 +149,30 @@ stack-stack : (f : OFF i j) (g : OFF k l) (h : OFF m n) →
 stack-stack [] g h = subsf-refl (stack g h)
 stack-stack (n∷ f) g h = cong n∷_ (stack-stack f g h)
 stack-stack (a∷ f) g h = cong a∷_ (stack-stack f g h)
+
+stack-subsf : ∀ {o p} .(i≡m : i ≡ m) .(j≡n : j ≡ n) .(k≡o : k ≡ o) .(l≡p : l ≡ p) f g →
+              stack (subsf i≡m j≡n f) (subsf k≡o l≡p g) ≡
+              subsf (cong₂ _+_ i≡m k≡o) (cong₂ _+_ j≡n l≡p) (stack f g)
+stack-subsf {_} {_} {suc _} {suc _} i≡m sj≡sn k≡o l≡p (n∷ f) g = cong n∷_ (stack-subsf i≡m (cong pred sj≡sn) k≡o l≡p f g)
+stack-subsf {zero} {zero} {zero} {zero} _ _ _ _ [] _ = refl
+stack-subsf {suc _} {suc _} {suc _} {suc _} si≡sm j≡n k≡o l≡p (a∷ f) g = cong a∷_ (stack-subsf (cong pred si≡sm) j≡n k≡o l≡p f g)
+
+stack-subsf₁ : .(i≡k : i ≡ k) .(j≡l : j ≡ l) (f : OFF i m) (g : OFF j n) →
+               stack (subsf₁ i≡k f) (subsf₁ j≡l g) ≡
+               subsf₁ (cong₂ _+_ i≡k j≡l) (stack f g)
+stack-subsf₁ i≡k j≡l = stack-subsf i≡k refl j≡l refl
+
+stack-subsf₂ : .(k≡m : k ≡ m) .(l≡n : l ≡ n) (f : OFF i k) (g : OFF j l) →
+               stack (subsf₂ k≡m f) (subsf₂ l≡n g) ≡
+               subsf₂ (cong₂ _+_ k≡m l≡n) (stack f g)
+stack-subsf₂ k≡m = stack-subsf refl k≡m refl
+
+ℕ*-pick : (i : Fin n) → subsf₁ (*-identityʳ m) (m ℕ* pick i) ≡ embed₁ i
+ℕ*-pick {m = zero} _ = subsf-refl []
+ℕ*-pick {m = suc m} i = begin
+  subsf₁ (*-identityʳ (suc m)) (suc m ℕ* pick i) ≡⟨⟩
+  subsf₁ (cong suc (*-identityʳ m)) (stack (pick i) (m ℕ* pick i)) ≡˘⟨ stack-subsf₁ refl (*-identityʳ m) (pick i) (m ℕ* pick i) ⟩
+  stack (subsf₁ refl (pick i)) (subsf₁ (*-identityʳ m) (m ℕ* pick i)) ≡⟨ cong (flip stack _) (subsf-refl (pick i)) ⟩
+  stack (pick i) (subsf₁ (*-identityʳ m) (m ℕ* pick i)) ≡⟨ cong (stack (pick i)) (ℕ*-pick i) ⟩
+  stack (pick i) (embed₁ i) ≡⟨⟩
+  embed₁ i ∎
