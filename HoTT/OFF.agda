@@ -6,7 +6,7 @@ module HoTT.OFF where
 
 open import Level hiding (zero; suc)
 open import Data.Nat.Base hiding (_≤_)
-open import Data.Fin.Base hiding (_+_)
+open import Data.Fin.Base hiding (_+_; pred)
 open import Data.Nat.Properties
 open import Relation.Binary.Core
 open import HoTT.EqNotation
@@ -25,8 +25,16 @@ data OFF : Rel ℕ 0ℓ where
 
   a∷_ : OFF m (suc n) → OFF (suc m) (suc n)
 
-subsf : k ≡ m → l ≡ n → OFF k l → OFF m n
-subsf = subst₂ OFF
+subsf : .(k ≡ m) → .(l ≡ n) → OFF k l → OFF m n
+subsf {_} {_} {suc _} {suc _} k≡m l≡n (n∷ f) = n∷ subsf k≡m (cong pred l≡n) f
+subsf {zero} {zero} {zero} {zero} _ _ [] = []
+subsf {suc _} {suc _} {suc _} {suc _} k≡m l≡n (a∷ f) = a∷ subsf (cong pred k≡m) l≡n f
+
+subsf₁ : .(k ≡ m) → OFF k n → OFF m n
+subsf₁ k≡m = subsf k≡m refl
+
+subsf₂ : .(l ≡ n) → OFF k l → OFF k n
+subsf₂ = subsf refl
 
 subsf₁ : k ≡ m → OFF k n → OFF m n
 subsf₁ = flip subsf refl

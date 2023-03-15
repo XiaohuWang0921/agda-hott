@@ -24,17 +24,16 @@ n∷-injective refl = refl
 a∷-injective : {f g : OFF m (suc n)} → a∷ f ≡ a∷ g → f ≡ g
 a∷-injective refl = refl
 
-subsf-trans : ∀ (i≡k : i ≡ k) (j≡l : j ≡ l) (k≡m : k ≡ m) (l≡n : l ≡ n) f →
+subsf-refl : (f : OFF m n) → subsf refl refl f ≡ f
+subsf-refl [] = refl
+subsf-refl (n∷ f) = cong n∷_ (subsf-refl f)
+subsf-refl (a∷ f) = cong a∷_ (subsf-refl f)
+
+subsf-trans : ∀ .(i≡k : i ≡ k) .(j≡l : j ≡ l) .(k≡m : k ≡ m) .(l≡n : l ≡ n) f →
               subsf (i≡k ∙ k≡m) (j≡l ∙ l≡n) f ≡ subsf k≡m l≡n (subsf i≡k j≡l f)
-subsf-trans refl refl _ _ _ = refl
-
-subsf-n∷ : ∀ (k≡m : k ≡ m) (l≡n : l ≡ n) f →
-           subsf k≡m (cong suc l≡n) (n∷ f) ≡ n∷ subsf k≡m l≡n f
-subsf-n∷ refl refl _ = refl
-
-subsf-a∷ : ∀ (k≡m : k ≡ m) (sl≡sn : suc l ≡ suc n) f →
-           subsf (cong suc k≡m) sl≡sn (a∷ f) ≡ a∷ subsf k≡m sl≡sn f
-subsf-a∷ refl refl _ = refl
+subsf-trans {_} {_} {suc _} {suc _} {_} {suc _} i≡k sj≡sl k≡m sl≡sn (n∷ f) = cong n∷_ (subsf-trans i≡k (cong pred sj≡sl) k≡m (cong pred sl≡sn) f)
+subsf-trans {zero} {zero} {zero} {zero} {zero} {zero} _ _ _ _ [] = refl
+subsf-trans {suc _} {suc _} {suc _} {suc _} {suc _} {suc _} si≡sk j≡l sk≡sm l≡n (a∷ f) = cong a∷_ (subsf-trans (cong pred si≡sk) j≡l (cong pred sk≡sm) l≡n f)
 
 ∘-assoc : (f : OFF m n) (g : OFF l m) (h : OFF k l) → (f ∘ g) ∘ h ≡ f ∘ (g ∘ h)
 ∘-assoc [] _ _ = refl
@@ -130,14 +129,8 @@ first-∘ (n∷ f) g = cong n∷_ (first-∘ f g)
 first-∘ (a∷ f) g = cong a∷_ (first-∘ f g)
 
 stack-id-empty : subsf₁ (+-identityʳ m) (stack id empty) ≡ first {n} m
-stack-id-empty {zero} = refl
-stack-id-empty {suc m} = begin
-  subsf₁ (+-identityʳ (suc m)) (stack id empty) ≡⟨⟩
-  subsf (cong suc (+-identityʳ m)) refl (a∷ n∷ stack id empty) ≡⟨ subsf-a∷ _ _ _ ⟩
-  a∷ subsf (+-identityʳ m) (cong suc refl) (n∷ stack id empty) ≡⟨ cong a∷_ (subsf-n∷ _ _ _) ⟩
-  a∷ n∷ subsf (+-identityʳ m) refl (stack id empty) ≡⟨ cong (a∷_ ∘′ n∷_) stack-id-empty ⟩
-  a∷ n∷ first m ≡⟨⟩
-  first (suc m) ∎
+stack-id-empty {zero} = subsf-refl empty
+stack-id-empty {suc m} = cong (a∷_ ∘′ n∷_) stack-id-empty
 
 stack-id : stack (id {m}) (id {n}) ≡ id
 stack-id {zero} = refl
@@ -153,11 +146,6 @@ stack-∘ f @ (a∷ _) (a∷ g) f′ g′ = cong a∷_ (stack-∘ f g f′ g′)
 stack-stack : (f : OFF i j) (g : OFF k l) (h : OFF m n) →
               subsf (+-assoc i k m) (+-assoc j l n) (stack (stack f g) h) ≡
                                                      stack f (stack g h)
-stack-stack [] _ _ = refl
-stack-stack (n∷ f) g h = subsf-n∷ _ _ _ ∙ cong n∷_ (stack-stack f g h)
-stack-stack (a∷ f) g h = subsf-a∷ _ _ _ ∙ cong a∷_ (stack-stack f g h)
-
-stack-subsf : ∀ {o p} (i≡m : i ≡ m) (j≡n : j ≡ n) (k≡o : k ≡ o) (l≡p : l ≡ p) f g →
-              stack (subsf i≡m j≡n f) (subsf k≡o l≡p g) ≡
-              subsf (cong₂ _+_ i≡m k≡o) (cong₂ _+_ j≡n l≡p) (stack f g)
-stack-subsf refl refl refl refl _ _ = refl
+stack-stack [] g h = subsf-refl (stack g h)
+stack-stack (n∷ f) g h = cong n∷_ (stack-stack f g h)
+stack-stack (a∷ f) g h = cong a∷_ (stack-stack f g h)
