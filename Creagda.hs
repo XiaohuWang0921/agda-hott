@@ -2,10 +2,10 @@ import System.Environment (getProgName)
 import Data.Functor.Compose (Compose (Compose, getCompose))
 import Data.Traversable (for)
 import System.Directory (getDirectoryContents, getCurrentDirectory)
-import System.FilePath (joinPath, normalise, (</>), splitDirectories, isDrive, takeDirectory, dropTrailingPathSeparator)
+import System.FilePath (joinPath, normalise, (</>), splitDirectories, isDrive, takeDirectory, pathSeparator, makeRelative, (<.>))
 import System.IO (Handle, hGetLine, hIsEOF, withFile, IOMode (ReadMode))
 import Control.Monad (join)
-import Control.Applicative
+import Control.Applicative (Applicative (liftA2), Alternative ((<|>)))
 
 printHelp :: IO ()
 printHelp = do
@@ -39,20 +39,34 @@ isAgdaLib ".agda-lib" = True
 isAgdaLib (_ : s) = isAgdaLib s
 isAgdaLib [] = False
 
-findRelativeRootFromAgdaLib :: Handle -> IO (Maybe FilePath)
-findRelativeRootFromAgdaLib hdl = do
+findRootFromAgdaLib :: Handle -> IO (Maybe FilePath)
+findRootFromAgdaLib hdl = do
     eof <- hIsEOF hdl
     if eof then return Nothing else do
         line <- hGetLine hdl
         case extractRoot line of
             Just path -> do
                 return $ Just path
-            Nothing -> findRelativeRootFromAgdaLib hdl
+            Nothing -> findRootFromAgdaLib hdl
 
 findRootFromDirectory :: FilePath -> IO (Maybe FilePath)
 findRootFromDirectory p = do
     agdaLibs <- ((p </>) <$>) . filter isAgdaLib <$> getDirectoryContents p
-    root <- foldr (liftA2 (<|>)) (return Nothing) $ (\ lib -> withFile lib ReadMode findRelativeRootFromAgdaLib) <$> agdaLibs
+    root <- foldr (liftA2 (<|>)) (return Nothing) $ (\ lib -> withFile lib ReadMode findRootFromAgdaLib) <$> agdaLibs
     case root of
         Nothing -> if isDrive p then return Nothing else findRootFromDirectory $ takeDirectory p
-        Just rp -> return $ Just $ dropTrailingPathSeparator $ normalise $ p </> rp
+        Just rp -> return $ Just $ normalise $ p </> rp
+
+replace :: (Eq a, Functor f) => a -> a -> f a -> f a
+replace old new = fmap (\ x -> if x == old then new else x)
+
+getFullInfoByRoot :: String -> FilePath -> IO (String, FilePath)
+getFullInfoByRoot ('.' : mod) root =
+    let rp = normalise $ replace '.' pathSeparator mod
+    in do
+        cwd <- getCurrentDirectory
+        let fp = cwd </> rp
+            fmod = replace pathSeparator '.' $ makeRelative root fp
+        return (fmod, fp <.> "agda")
+getFullInfoByRoot mod root =
+    return (mod, root </> replace '.' pathSeparator mod <.> "agda")
