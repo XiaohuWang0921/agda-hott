@@ -114,7 +114,7 @@ embed₂ : Fin m → OFF n (m * n)
 embed₂ zero = first _
 embed₂ (suc i) = stack empty (embed₂ i)
 
-infixr 7 _ℕ*_
+infixr 10 _ℕ*_
 _ℕ*_ : ∀ l → OFF m n → OFF (l * m) (l * n)
 zero ℕ* f = []
 suc l ℕ* f = stack f (l ℕ* f)
@@ -123,7 +123,7 @@ skip : Fin (suc n) → OFF n (suc n)
 skip zero = n∷ id
 skip {suc _} (suc i) = a∷ n∷ skip i
 
-switch : Fin n → Fin (suc n) → Fin n × Fin (suc n)
-switch {suc _} i zero = zero , suc i
-switch zero (suc j) = j , zero
+switch : Fin (suc n) → Fin n → Fin (suc n) × Fin n
+switch {suc _} zero j = suc j , zero
+switch (suc i) zero = zero , i
 switch (suc i) (suc j) = map suc suc (switch i j)

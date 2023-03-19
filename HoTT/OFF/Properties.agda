@@ -11,6 +11,7 @@ open import HoTT.EqNotation
 open import Function.Base as Fun hiding (id; _∘_)
 open import Relation.Binary
 open import Relation.Nullary
+open import Data.Product
 
 open ≡-Reasoning
 
@@ -143,12 +144,17 @@ stack-∘ [] [] _ _ = refl
 stack-∘ (a∷ f) (n∷ g) f′ g′ = stack-∘ f g f′ g′
 stack-∘ f @ (a∷ _) (a∷ g) f′ g′ = cong a∷_ (stack-∘ f g f′ g′)
 
-stack-stack : (f : OFF i j) (g : OFF k l) (h : OFF m n) →
-              subsf (+-assoc i k m) (+-assoc j l n) (stack (stack f g) h) ≡
-                                                     stack f (stack g h)
-stack-stack [] g h = subsf-refl (stack g h)
-stack-stack (n∷ f) g h = cong n∷_ (stack-stack f g h)
-stack-stack (a∷ f) g h = cong a∷_ (stack-stack f g h)
+stack-stackˡ : (f : OFF i j) (g : OFF k l) (h : OFF m n) → stack (stack f g) h ≡
+               subsf (+-assoc i k m ⋆) (+-assoc j l n ⋆) (stack f (stack g h))
+stack-stackˡ [] g h = subsf-refl (stack g h) ⋆
+stack-stackˡ (n∷ f) g h = cong n∷_ (stack-stackˡ f g h)
+stack-stackˡ (a∷ f) g h = cong a∷_ (stack-stackˡ f g h)
+
+stack-stackʳ : (f : OFF i j) (g : OFF k l) (h : OFF m n) → stack f (stack g h) ≡
+               subsf (+-assoc i k m) (+-assoc j l n) (stack (stack f g) h)
+stack-stackʳ [] g h = subsf-refl (stack g h) ⋆
+stack-stackʳ (n∷ f) g h = cong n∷_ (stack-stackʳ f g h)
+stack-stackʳ (a∷ f) g h = cong a∷_ (stack-stackʳ f g h)
 
 stack-subsf : ∀ {o p} .(i≡m : i ≡ m) .(j≡n : j ≡ n) .(k≡o : k ≡ o) .(l≡p : l ≡ p) f g →
               stack (subsf i≡m j≡n f) (subsf k≡o l≡p g) ≡
@@ -167,6 +173,42 @@ stack-subsf₂ : .(k≡m : k ≡ m) .(l≡n : l ≡ n) (f : OFF i k) (g : OFF j 
                subsf₂ (cong₂ _+_ k≡m l≡n) (stack f g)
 stack-subsf₂ k≡m = stack-subsf refl k≡m refl
 
+stack-subsfˡ : .(i≡k : i ≡ k) .(j≡l : j ≡ l) (f : OFF i j) (g : OFF m n) →
+               stack (subsf i≡k j≡l f) g ≡ subsf (cong (_+ m) i≡k) (cong (_+ n) j≡l) (stack f g)
+stack-subsfˡ i≡k j≡l f g = cong (stack _) (subsf-refl g) ⋆ ∙
+                           stack-subsf i≡k j≡l refl refl f g
+
+stack-subsfʳ : .(k≡m : k ≡ m) .(l≡n : l ≡ n) (f : OFF i j) (g : OFF k l) →
+               stack f (subsf k≡m l≡n g) ≡ subsf (cong (i +_) k≡m) (cong (j +_) l≡n) (stack f g)
+stack-subsfʳ k≡m l≡n f g = cong (flip stack _) (subsf-refl f) ⋆ ∙
+                           stack-subsf refl refl k≡m l≡n f g
+
+shiftˡ-shiftʳ : (f : OFF k l) (g : OFF m n) →
+                shiftˡ n f ∘ shiftʳ k g ≡ shiftʳ l g ∘ shiftˡ m f
+shiftˡ-shiftʳ f g = begin
+  shiftˡ _ f ∘ shiftʳ _ g ≡⟨⟩
+  stack id f ∘ stack g id ≡˘⟨ stack-∘ id g f id ⟩
+  stack (id ∘ g) (f ∘ id) ≡⟨ cong (stack _) (∘-identityʳ f) ⟩
+  stack (id ∘ g) f ≡⟨ cong (flip stack _) (∘-identityˡ g) ⟩
+  stack g f ≡˘⟨ cong (flip stack _) (∘-identityʳ g) ⟩
+  stack (g ∘ id) f ≡˘⟨ cong (stack _) (∘-identityˡ f) ⟩
+  stack (g ∘ id) (id ∘ f) ≡⟨ stack-∘ g id id f ⟩
+  stack g id ∘ stack id f ≡⟨⟩
+  shiftʳ _ g ∘ shiftˡ _ f ∎
+
+embed₂-∘ : (i : Fin l) (f : OFF m n) → embed₂ i ∘ f ≡ l ℕ* f ∘ embed₂ i
+embed₂-∘ {suc l} zero f = first-∘ f (l ℕ* f)
+embed₂-∘ {suc l} (suc i) f = begin
+  embed₂ (suc i) ∘ f ≡⟨⟩
+  stack empty (embed₂ i) ∘ f ≡⟨⟩
+  stack empty (embed₂ i) ∘ stack [] f ≡˘⟨ stack-∘ empty [] (embed₂ i) f ⟩
+  stack (empty ∘ []) (embed₂ i ∘ f) ≡⟨ cong (flip stack (embed₂ i ∘ f)) (empty-universal _) ⟩
+  stack empty (embed₂ i ∘ f) ≡⟨ cong (stack _) (embed₂-∘ i f) ⟩
+  stack empty (l ℕ* f ∘ embed₂ i) ≡˘⟨ cong (flip stack _) (empty-universal (f ∘ empty)) ⟩
+  stack (f ∘ empty) (l ℕ* f ∘ embed₂ i) ≡⟨ stack-∘ f _ (l ℕ* f) _ ⟩
+  stack f (l ℕ* f) ∘ stack empty (embed₂ i) ≡⟨⟩
+  suc l ℕ* f ∘ embed₂ (suc i) ∎
+
 ℕ*-pick : (i : Fin n) → subsf₁ (*-identityʳ m) (m ℕ* pick i) ≡ embed₁ i
 ℕ*-pick {m = zero} _ = subsf-refl []
 ℕ*-pick {m = suc m} i = begin
@@ -176,3 +218,41 @@ stack-subsf₂ k≡m = stack-subsf refl k≡m refl
   stack (pick i) (subsf₁ (*-identityʳ m) (m ℕ* pick i)) ≡⟨ cong (stack (pick i)) (ℕ*-pick i) ⟩
   stack (pick i) (embed₁ i) ≡⟨⟩
   embed₁ i ∎
+
+ℕ*-id : ∀ m → m ℕ* (id {n}) ≡ id
+ℕ*-id zero = refl
+ℕ*-id {n} (suc m) = cong (stack id) (ℕ*-id m) ∙ stack-id {n}
+
+ℕ*-∘ : ∀ k (f : OFF m n) (g : OFF l m) → k ℕ* (f ∘ g) ≡ k ℕ* f ∘ k ℕ* g
+ℕ*-∘ zero _ _ = refl
+ℕ*-∘ (suc k) f g = cong (stack (f ∘ g)) (ℕ*-∘ k f g) ∙ stack-∘ f g _ _
+
+stack-ℕ* : ∀ k l (f : OFF m n) → stack (k ℕ* f) (l ℕ* f) ≡
+           subsf (*-distribʳ-+ m k l) (*-distribʳ-+ n k l) ((k + l) ℕ* f)
+stack-ℕ* zero _ _ = subsf-refl _ ⋆
+stack-ℕ* {m} {n} (suc k) l f = begin
+  stack (suc k ℕ* f) (l ℕ* f) ≡⟨⟩
+  stack (stack f (k ℕ* f)) (l ℕ* f) ≡⟨ stack-stackˡ f _ _ ⟩
+  subsf _ _ (stack f (stack (k ℕ* f) (l ℕ* f))) ≡⟨ cong (subsf _ _ ∘′ stack f) (stack-ℕ* k l f) ⟩
+  subsf _ _ (stack f (subsf _ _ ((k + l) ℕ* f))) ≡⟨ cong (subsf _ _) (stack-subsfʳ (*-distribʳ-+ m k l) _ f _) ⟩
+  subsf _ _ (subsf _ _ (stack f ((k + l) ℕ* f))) ≡˘⟨ subsf-trans _ _ _ _ _ ⟩
+  subsf _ _ (stack f ((k + l) ℕ* f)) ≡⟨⟩
+  subsf _ _ ((suc k + l) ℕ* f) ∎
+
+ℕ*-ℕ* : ∀ k l (f : OFF m n) → k ℕ* l ℕ* f ≡
+        subsf (*-assoc k l m) (*-assoc k l n) ((k * l) ℕ* f)
+ℕ*-ℕ* zero _ _ = subsf-refl _ ⋆
+ℕ*-ℕ* (suc k) l f = begin
+  suc k ℕ* l ℕ* f ≡⟨⟩
+  stack (l ℕ* f) (k ℕ* l ℕ* f) ≡⟨ cong (stack _) (ℕ*-ℕ* k l f) ⟩
+  stack (l ℕ* f) (subsf _ _ ((k * l) ℕ* f)) ≡⟨ stack-subsfʳ _ _ (l ℕ* f) _ ⟩
+  subsf _ _ (stack (l ℕ* f) ((k * l) ℕ* f)) ≡⟨ cong (subsf _ _) (stack-ℕ* l (k * l) f) ⟩
+  subsf _ _ (subsf _ _ ((suc k * l) ℕ* f)) ≡˘⟨ subsf-trans _ _ _ _ _ ⟩
+  subsf _ _ ((suc k * l) ℕ* f) ∎
+
+skip-switch : ∀ i (j : Fin (suc n)) → skip i ∘ skip j ≡
+              let j′ , i′ = switch i j
+              in  skip j′ ∘ skip i′
+skip-switch zero j = cong n∷_ (∘-identityˡ (skip j) ∙ ∘-identityʳ _ ⋆)
+skip-switch (suc i) zero = cong n∷_ (∘-identityʳ (skip i) ∙ ∘-identityˡ _ ⋆)
+skip-switch {suc _} (suc i) (suc j) = cong (a∷_ ∘′ n∷_) (skip-switch i j)
