@@ -89,4 +89,4 @@ main = do
                         case rest of
                             [comment] -> hPutStr hdl $ "-- " ++ comment ++ "\n\n"
                             _ -> return ()
-                        hPutStr hdl $ "{-# OPTIONS --without-K --safe #-}\n\nmodule " ++ mod ++ " where")
+                        hPutStr hdl $ "{-# OPTIONS --without-K --safe #-}\n\nmodule " ++ name ++ " where")
