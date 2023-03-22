@@ -4,12 +4,14 @@ module HoTT.Presheaf.Morphism where
 
 open import Level
 open import HoTT.Presheaf
-open import HoTT.OFF hiding (id; _∘_)
+open import HoTT.OFF as OFF hiding (id; _∘_)
+open import HoTT.OFF.Properties
 open import Data.Nat.Base hiding (_⊔_)
 open import Function.Bundles
 open import Relation.Binary.Core
 open import Relation.Binary.Structures
 open import Function.Base as Fun hiding (id; _∘_)
+open import HoTT.EqNotation as P hiding (cong; refl; isEquivalence)
 
 private
   variable
@@ -67,3 +69,12 @@ _⊜_ {B = B} F G = ∀ {n} s → ε {n} s ≈ η s
   where open Presheaf B using (_≈_)
         open _⇉_ F renaming (apply to ε)
         open _⇉_ G renaming (apply to η)
+
+Yoneda : OFF m n → Hom m ⇉ Hom n
+Yoneda f = record
+  { transform = record
+    { f = f OFF.∘_
+    ; cong = P.cong (f OFF.∘_)
+    }
+  ; isNatural = λ g s → ∘-assoc f s g ⋆
+  }

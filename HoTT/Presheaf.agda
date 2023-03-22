@@ -40,8 +40,8 @@ record Presheaf a ℓ : Set (suc (a ⊔ ℓ)) where
   cong : (f : OFF m n) → fmap f Preserves _≈_ ⟶ _≈_
   cong f = morph f .Func.cong
 
-homPresheaf : ℕ → Presheaf 0ℓ 0ℓ
-homPresheaf m = record
+Hom : ℕ → Presheaf 0ℓ 0ℓ
+Hom m = record
   { Space = λ n → setoid (OFF n m)
   ; morph = λ f → record
     { f = _∘ f
