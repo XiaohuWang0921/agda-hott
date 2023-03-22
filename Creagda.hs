@@ -1,7 +1,7 @@
 import System.Environment (getProgName, getArgs)
 import Data.Functor.Compose (Compose (Compose, getCompose))
 import Data.Traversable (for)
-import System.Directory (getDirectoryContents, getCurrentDirectory)
+import System.Directory (listDirectory, getCurrentDirectory, createDirectoryIfMissing)
 import System.FilePath (joinPath, normalise, (</>), splitDirectories, isDrive, takeDirectory, pathSeparator, makeRelative, (<.>))
 import System.IO (Handle, hGetLine, hIsEOF, withFile, IOMode (ReadMode, WriteMode), hPutStr)
 import Control.Monad (join)
@@ -52,7 +52,7 @@ findRootFromAgdaLib hdl = do
 
 findRootFromDirectory :: FilePath -> IO (Maybe FilePath)
 findRootFromDirectory p = do
-    agdaLibs <- ((p </>) <$>) . filter isAgdaLib <$> getDirectoryContents p
+    agdaLibs <- ((p </>) <$>) . filter isAgdaLib <$> listDirectory p
     root <- foldr (liftA2 (<|>)) (return Nothing) $ (\ lib -> withFile lib ReadMode findRootFromAgdaLib) <$> agdaLibs
     case root of
         Nothing -> if isDrive p then return Nothing else findRootFromDirectory $ takeDirectory p
@@ -85,6 +85,7 @@ main = do
                 Nothing -> die "Cannot fine .agda-lib file pointing to the project root"
                 Just p -> do
                     (name, path) <- getFullInfoByRoot mod p
+                    createDirectoryIfMissing True $ takeDirectory path
                     withFile path WriteMode (\ hdl -> do
                         case rest of
                             [comment] -> hPutStr hdl $ "-- " ++ comment ++ "\n\n"
