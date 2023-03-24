@@ -196,6 +196,14 @@ shiftˡ-shiftʳ f g = begin
   stack g id ∘ stack id f ≡⟨⟩
   shiftʳ _ g ∘ shiftˡ _ f ∎
 
+shiftˡ-∘ : ∀ k (f : OFF m n) (g : OFF l m) →
+           shiftˡ k (f ∘ g) ≡ shiftˡ k f ∘ shiftˡ k g
+shiftˡ-∘ _ f g = cong (flip stack (f ∘ g)) (∘-identityˡ id) ⋆ ∙ stack-∘ id id f g
+
+shiftʳ-∘ : ∀ k (f : OFF m n) (g : OFF l m) →
+           shiftʳ k (f ∘ g) ≡ shiftʳ k f ∘ shiftʳ k g
+shiftʳ-∘ _ f g = cong (stack (f ∘ g)) (∘-identityʳ id) ⋆ ∙ stack-∘ f g id id
+
 embed₂-∘ : (i : Fin l) (f : OFF m n) → embed₂ i ∘ f ≡ l ℕ* f ∘ embed₂ i
 embed₂-∘ {suc l} zero f = first-∘ f (l ℕ* f)
 embed₂-∘ {suc l} (suc i) f = begin
