@@ -1,7 +1,7 @@
 module Root where
 
 import System.IO (Handle, hIsEOF, hGetLine, withFile, IOMode(ReadMode))
-import System.FilePath (FilePath, (</>), isDrive, takeDirectory, normalise)
+import System.FilePath (FilePath, (</>), isDrive, takeDirectory, normalise, pathSeparator, (<.>))
 import Control.Applicative (liftA2, (<|>))
 import System.Directory (listDirectory)
 
@@ -49,3 +49,9 @@ findRootFromDirectory p = do
     case root of
         Nothing -> if isDrive p then return Nothing else findRootFromDirectory $ takeDirectory p
         Just rp -> return $ Just $ normalise $ p </> rp
+
+replace :: (Eq a, Functor f) => a -> a -> f a -> f a
+replace old new = fmap (\ x -> if x == old then new else x)
+
+getPathByRoot :: String -> FilePath -> FilePath
+getPathByRoot mod root = root </> replace '.' pathSeparator mod <.> "agda"

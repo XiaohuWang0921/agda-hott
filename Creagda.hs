@@ -3,15 +3,12 @@ import System.Directory (getCurrentDirectory, createDirectoryIfMissing)
 import System.FilePath (normalise, (</>), takeDirectory, pathSeparator, makeRelative, (<.>))
 import System.IO (withFile, IOMode (WriteMode), hPutStr)
 import System.Exit (die)
-import Root (findRootFromDirectory)
+import Root (findRootFromDirectory, replace, getPathByRoot)
 
 printHelpAndExit :: IO a
 printHelpAndExit = do
     progName <- getProgName
     die $ "Usage: " ++ progName ++ " <module> [comment]"
-
-replace :: (Eq a, Functor f) => a -> a -> f a -> f a
-replace old new = fmap (\ x -> if x == old then new else x)
 
 getFullInfoByRoot :: String -> FilePath -> IO (String, FilePath)
 getFullInfoByRoot ('.' : mod) root =
@@ -22,7 +19,7 @@ getFullInfoByRoot ('.' : mod) root =
             fmod = replace pathSeparator '.' $ makeRelative root fp
         return (fmod, fp <.> "agda")
 getFullInfoByRoot mod root =
-    return (mod, root </> replace '.' pathSeparator mod <.> "agda")
+    return (mod, getPathByRoot mod root)
 
 main :: IO ()
 main = do
