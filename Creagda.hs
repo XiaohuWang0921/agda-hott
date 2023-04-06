@@ -19,7 +19,7 @@ getFullInfoByRoot ('.' : mod) root =
             fmod = replace pathSeparator '.' $ makeRelative root fp
         return (fmod, fp <.> "agda")
 getFullInfoByRoot mod root =
-    return (mod, getPathByRoot mod root)
+    return (mod, getPathByRoot mod root <.> "agda")
 
 main :: IO ()
 main = do
