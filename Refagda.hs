@@ -30,6 +30,17 @@ movePath old new = do
     else
         return ()
 
+replaceSubstring :: String -> String -> String -> String
+replaceSubstring old new = snd $ replacePrefix old new
+    where
+        replacePrefix :: String -> String -> String -> (Bool, String)
+        replacePrefix [] newPrefix s = (True, newPrefix ++ replaceSubstring old new s)
+        replacePrefix (x : xs) newPrefix (c : s)
+            | x == c = case replacePrefix xs s of
+                (True, newS) = (True, newS)
+                (False, newS) = (False, c : newS)
+            | otherwise = (False, c : replaceSubstring old new s)
+
 main :: IO ()
 main = do
     args <- getArgs
