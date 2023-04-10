@@ -27,9 +27,9 @@ extractRoot s = end . init <$> (include (init s) >>= colon . init)
             t -> ' ' : t
         end (c : s) = c : end s
 
-isAgdaLib :: String -> Bool
+isAgdaLib :: FilePath -> Bool
 isAgdaLib ".agda-lib" = True
-isAgdaLib (_ : s) = isAgdaLib s
+isAgdaLib (_ : p) = isAgdaLib p
 isAgdaLib [] = False
 
 findRootFromAgdaLib :: Handle -> IO (Maybe FilePath)
