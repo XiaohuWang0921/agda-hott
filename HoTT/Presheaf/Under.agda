@@ -11,8 +11,8 @@ open import HoTT.OFF.Properties
 open import Relation.Binary.Core
 open import Relation.Binary.Bundles
 open import Relation.Binary.Structures
-open import Function.Base hiding (id; _∘_)
-open import Function.Bundles
+open import Function.Base as Fun hiding (id; _∘_)
+open import HoTT.Setoid.Morphism as Mor hiding (id; _∘_)
 open import Relation.Binary.PropositionalEquality.Core as P hiding (refl; sym; trans; cong)
 import Relation.Binary.Reasoning.Setoid
 
@@ -21,21 +21,20 @@ open Presheaf P
 private
   variable
     l m n : ℕ
-    tip : Simplex l
 
 record UnderSimplex (tip : Simplex l) (n : ℕ) : Set (a ⊔ ℓ) where
   field
     solid : Simplex (l + n)
     fromTip : fmap (first l) solid ≈ tip
 
-open UnderSimplex
+open UnderSimplex public
 
 infix 4 _≈↓_
-_≈↓_ : Rel (UnderSimplex tip n) ℓ
+_≈↓_ : {tip : Simplex l} → Rel (UnderSimplex tip n) ℓ
 _≈↓_ = _≈_ on solid
 
-≈↓-isEquivalence : IsEquivalence (_≈↓_ {l} {tip} {n})
-≈↓-isEquivalence {l} {_} {n} = record
+≈↓-isEquivalence : {tip : Simplex l} → IsEquivalence (_≈↓_ {l} {n} {tip})
+≈↓-isEquivalence {l} {n} = record
   { refl = refl
   ; sym = sym
   ; trans = trans
@@ -49,21 +48,32 @@ UnderSpace tip n = record
   ; isEquivalence = ≈↓-isEquivalence
   }
 
-morph↓ : OFF m n → Func (UnderSpace tip n) (UnderSpace tip m)
-morph↓ {m} {n} {l} {tip} f .Func.f u = record
-  { solid = fmap (shiftˡ l f) (u .solid)
-  ; fromTip = begin
-    fmap (first l) (fmap (shiftˡ l f) (u .solid)) ≡⟨⟩
-    fmap (first l) (fmap (stack id f) (u .solid)) ≈˘⟨ fmap-∘ _ _ _ ⟩
-    fmap (stack id f ∘ first l) (u .solid) ≈˘⟨ reflexive (P.cong (flip fmap _) (first-∘ id f)) ⟩
-    fmap (first l ∘ id) (u .solid) ≈⟨ reflexive (P.cong (flip fmap _) (∘-identityʳ (first l))) ⟩
-    fmap (first l) (u .solid) ≈⟨ u .fromTip ⟩
-    tip ∎
+sink : (F : Space (l + m) ⟶ Space (l + n)) → morph (first l) Mor.∘ F ⊖ morph (first l) → {tip : Simplex l} → UnderSpace tip m ⟶ UnderSpace tip n
+sink {l = l} F F-first = record
+  { _⟨$⟩_ = λ u → record
+    { solid = F ⟨$⟩ u .solid
+    ; fromTip = trans F-first (u .fromTip)
+    }
+  ; cong = F .cong
   }
-  where open Relation.Binary.Reasoning.Setoid (Space l)
-        open IsEquivalence (isEquivalence {l})
-morph↓ {m} {n} {l} {tip} f .Func.cong {u} {v} = cong _
+  where open Setoid (Space l)
 
+base : {tip : Simplex l} → UnderSpace tip n ⟶ Space (l + n)
+base = record
+  { _⟨$⟩_ = solid
+  ; cong = Fun.id
+  }
+
+morph↓ : {tip : Simplex l} → OFF m n → UnderSpace tip n ⟶ UnderSpace tip m
+morph↓ {l} {m} {n} f = sink (morph (shiftˡ l f)) (begin
+  morph (first l) Mor.∘ morph (shiftˡ l f) ≈˘⟨ morph-∘ _ _ ⟩
+  morph (shiftˡ l f ∘ first l) ≡⟨⟩
+  morph (stack id f ∘ first l) ≈˘⟨ reflexive (P.cong morph (first-∘ id f)) ⟩
+  morph (first l ∘ id) ≈⟨ reflexive (P.cong morph (∘-identityʳ _)) ⟩
+  morph (first l) ∎)
+  where open Relation.Binary.Reasoning.Setoid (Space (l + n) ⇨ Space l)
+        open IsEquivalence (⊖-isEquivalence {From = Space (l + n)} {To = Space l})
+{-
 under : Simplex l → Presheaf (a ⊔ ℓ) ℓ
 under tip .Space = UnderSpace tip
 under tip .morph = morph↓
@@ -87,3 +97,4 @@ under {l} tip .fmap-∘ {l = k} f g u = begin
 base : Func (UnderSpace tip n) (Space n)
 base {n = n} .Func.f u = fmap (shiftʳ n empty) (u .solid)
 base {n = n} .Func.cong {u} {v} u≈v = cong _ u≈v
+-}

@@ -58,9 +58,9 @@ boundary {suc n} s .compatible i j =
   in begin
      common (boundary s .faces) i j ≡⟨⟩
      fmap (skip j) (boundary s .faces i) ≡⟨⟩
-     fmap (skip j) (fmap (skip i) s) ≈˘⟨ fmap-∘ (skip i) (skip j) s ⟩
+     fmap (skip j) (fmap (skip i) s) ≈˘⟨ morph-∘ (skip i) (skip j) ⟩
      fmap (skip i ∘ skip j) s ≈⟨ reflexive (P.cong (flip fmap s) (skip-switch i j)) ⟩
-     fmap (skip j′ ∘ skip i′) s ≈⟨ fmap-∘ (skip j′) (skip i′) s ⟩
+     fmap (skip j′ ∘ skip i′) s ≈⟨ morph-∘ (skip j′) (skip i′) ⟩
      fmap (skip i′) (fmap (skip j′) s) ≡⟨⟩
      fmap (skip i′) (boundary s .faces j′) ≡⟨⟩
      common (boundary s .faces) j′ i′ ∎

@@ -7,10 +7,11 @@ open import Relation.Binary.Core
 open import Relation.Binary.Bundles
 open import Relation.Binary.Structures
 open import HoTT.EqNotation hiding (isEquivalence; cong)
-open import Function.Bundles
+open import HoTT.Setoid.Morphism as Mor hiding (id; _∘_)
 open import Data.Nat.Base hiding (_⊔_; suc)
 open import HoTT.OFF
 open import HoTT.OFF.Properties
+open import Function.Base hiding (id; _∘_)
 
 private
   variable
@@ -19,7 +20,9 @@ private
 record Presheaf a ℓ : Set (suc (a ⊔ ℓ)) where
   field
     Space : ℕ → Setoid a ℓ
-    morph : OFF m n → Func (Space n) (Space m)
+    morph : OFF m n → Space n ⟶ Space m
+    morph-id : morph (id {n}) ⊖ Mor.id
+    morph-∘ : (f : OFF m n) (g : OFF l m) → morph (f ∘ g) ⊖ morph g Mor.∘ morph f
 
   Simplex : ℕ → Set a
   Simplex n = Space n .Setoid.Carrier
@@ -28,25 +31,21 @@ record Presheaf a ℓ : Set (suc (a ⊔ ℓ)) where
   _≈_ = Space _ .Setoid._≈_
 
   fmap : OFF m n → Simplex n → Simplex m
-  fmap f = morph f .Func.f
-
-  field
-    fmap-id : (s : Simplex n) → fmap id s ≈ s
-    fmap-∘ : ∀ (f : OFF m n) (g : OFF l m) s → fmap (f ∘ g) s ≈ fmap g (fmap f s)
+  fmap f = morph f ⟨$⟩_
 
   isEquivalence : IsEquivalence (_≈_ {n})
   isEquivalence = Space _ .Setoid.isEquivalence
 
-  cong : (f : OFF m n) → fmap f Preserves _≈_ ⟶ _≈_
-  cong f = morph f .Func.cong
+  fmap-cong : (f : OFF m n) → fmap f Preserves _≈_ ⟶ _≈_
+  fmap-cong f = morph f .cong
 
 Hom : ℕ → Presheaf 0ℓ 0ℓ
 Hom m = record
   { Space = λ n → setoid (OFF n m)
   ; morph = λ f → record
-    { f = _∘ f
+    { _⟨$⟩_ = _∘ f
     ; cong = icong
     }
-  ; fmap-id = ∘-identityʳ
-  ; fmap-∘ = λ f g s → ∘-assoc s f g ⋆
+  ; morph-id = ∘-identityʳ $-
+  ; morph-∘ = λ f g {h} → ∘-assoc h f g ⋆
   }
