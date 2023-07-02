@@ -6,21 +6,23 @@ module HoTT.Presheaf.Under {a ℓ} (P : Presheaf a ℓ) where
 
 open import Level
 open import Data.Nat.Base hiding (_⊔_)
-open import HoTT.OFF
-open import HoTT.OFF.Properties
+open import HoTT.OFF as OFF hiding (id; _∘_; ∘-assoc; ∘-identityˡ; ∘-identityʳ)
 open import Relation.Binary.Core
 open import Relation.Binary.Bundles
 open import Relation.Binary.Structures
 open import Function.Base as Fun hiding (id; _∘_)
-open import HoTT.Setoid.Morphism as Mor hiding (id; _∘_)
+open import HoTT.Setoid.Morphism
 open import Relation.Binary.PropositionalEquality.Core as P hiding (refl; sym; trans; cong)
 import Relation.Binary.Reasoning.Setoid
+open import Function.Base as Fun hiding (id; _∘_; _ˢ_; flip)
 
 open Presheaf P
 
 private
   variable
     l m n : ℕ
+    b r : Level
+    B : Setoid b r
 
 record UnderSimplex (tip : Simplex l) (n : ℕ) : Set (a ⊔ ℓ) where
   field
@@ -48,11 +50,18 @@ UnderSpace tip n = record
   ; isEquivalence = ≈↓-isEquivalence
   }
 
-sink : (F : Space (l + m) ⟶ Space (l + n)) → morph (first l) Mor.∘ F ⊖ morph (first l) → {tip : Simplex l} → UnderSpace tip m ⟶ UnderSpace tip n
-sink {l = l} F F-first = record
+infix 4 _IsPreserved↓_
+_IsPreserved↓_ : ∀ l (F : Space (l + m) ⟶ Space (l + n)) → Set (a ⊔ ℓ)
+l IsPreserved↓ F = morph (first l) ∘ F ⊖ morph (first l)
+
+id-preserves : l IsPreserved↓ id {From = Space (l + n)}
+id-preserves = ∘-identityʳ (morph (first _))
+
+sink : (F : Space (l + m) ⟶ Space (l + n)) → l IsPreserved↓ F → {tip : Simplex l} → UnderSpace tip m ⟶ UnderSpace tip n
+sink {l = l} F F-↓ = record
   { _⟨$⟩_ = λ u → record
     { solid = F ⟨$⟩ u .solid
-    ; fromTip = trans F-first (u .fromTip)
+    ; fromTip = trans F-↓ (u .fromTip)
     }
   ; cong = F .cong
   }
@@ -64,15 +73,27 @@ base = record
   ; cong = Fun.id
   }
 
+base-cancelˡ : {tip : Simplex l} {F G : B ⟶ UnderSpace tip n} → base ∘ F ⊖ base ∘ G → F ⊖ G
+base-cancelˡ = Fun.id
+
+sink-id : {tip : Simplex l} {id-↓ : l IsPreserved↓ id} → sink (id {From = Space (l + n)}) id-↓ {tip} ⊖ id
+sink-id {l = l} {n = n} = refl
+  where open Setoid (Space (l + n))
+
+sink-base : (F : Space (l + m) ⟶ Space (l + n)) (isPreserved : l IsPreserved↓ F) → {tip : Simplex l} → base ∘ sink F isPreserved {tip} ⊖ F ∘ base
+sink-base {l = l} {n = n} _ _ = refl
+  where open Setoid (Space (l + n))
+
 morph↓ : {tip : Simplex l} → OFF m n → UnderSpace tip n ⟶ UnderSpace tip m
 morph↓ {l} {m} {n} f = sink (morph (shiftˡ l f)) (begin
-  morph (first l) Mor.∘ morph (shiftˡ l f) ≈˘⟨ morph-∘ _ _ ⟩
-  morph (shiftˡ l f ∘ first l) ≡⟨⟩
-  morph (stack id f ∘ first l) ≈˘⟨ reflexive (P.cong morph (first-∘ id f)) ⟩
-  morph (first l ∘ id) ≈⟨ reflexive (P.cong morph (∘-identityʳ _)) ⟩
+  morph (first l) ∘ morph (shiftˡ l f) ≈˘⟨ morph-∘ _ _ ⟩
+  morph (shiftˡ l f OFF.∘ first l) ≡⟨⟩
+  morph (stack OFF.id f OFF.∘ first l) ≈˘⟨ reflexive (P.cong morph (first-∘ OFF.id f)) ⟩
+  morph (first l OFF.∘ OFF.id) ≈⟨ reflexive (P.cong morph (OFF.∘-identityʳ _)) ⟩
   morph (first l) ∎)
   where open Relation.Binary.Reasoning.Setoid (Space (l + n) ⇨ Space l)
         open IsEquivalence (⊖-isEquivalence {From = Space (l + n)} {To = Space l})
+
 {-
 under : Simplex l → Presheaf (a ⊔ ℓ) ℓ
 under tip .Space = UnderSpace tip

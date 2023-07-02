@@ -17,10 +17,11 @@ open import Relation.Binary.Structures
 
 private
   variable
-    a b c r s t : Level
+    a b c d r s t u : Level
     From : Setoid a r
-    To : Setoid b s
-    End : Setoid c t
+    To   : Setoid b s
+    More : Setoid c t
+    End  : Setoid d u
 
 infixr 0 _⟶_
 record _⟶_ (From : Setoid a r) (To : Setoid b s) : Set (a ⊔ b ⊔ r ⊔ s) where
@@ -62,13 +63,25 @@ id = record
   }
 
 infixr 9 _∘_
-_∘_ : (To ⟶ End) → (From ⟶ To) → From ⟶ End
+_∘_ : (To ⟶ More) → (From ⟶ To) → From ⟶ More
 F ∘ G = record
   { _⟨$⟩_ = (F ⟨$⟩_) ∘′ (G ⟨$⟩_)
   ; cong = F .cong ∘′ G .cong
   }
 
-compose : (To ⇨ End) ⟶ (From ⇨ To) ⇨ From ⇨ End
+∘-assoc : (F : More ⟶ End) (G : To ⟶ More) (H : From ⟶ To) → (F ∘ G) ∘ H ⊖ F ∘ (G ∘ H)
+∘-assoc {End = End} _ _ _ = refl
+  where open Setoid End
+
+∘-identityˡ : (F : From ⟶ To) → id ∘ F ⊖ F
+∘-identityˡ {To = To} _ = refl
+  where open Setoid To
+
+∘-identityʳ : (F : From ⟶ To) → F ∘ id ⊖ F
+∘-identityʳ {To = To} _ = refl
+  where open Setoid To
+
+compose : (To ⇨ More) ⟶ (From ⇨ To) ⇨ From ⇨ More
 compose  = record
   { _⟨$⟩_ = λ F → record
     { _⟨$⟩_ = F ∘_
@@ -88,13 +101,13 @@ const {To = To} = record
   where open Setoid To
 
 infixl 8 _ˢ_
-_ˢ_ : (From ⟶ To ⇨ End) → (From ⟶ To) → From ⟶ End
-_ˢ_ {End = End} F G = record
+_ˢ_ : (From ⟶ To ⇨ More) → (From ⟶ To) → From ⟶ More
+_ˢ_ {More = More} F G = record
   { _⟨$⟩_ = λ x → F ⟨$⟩ x ⟨$⟩ (G ⟨$⟩ x)
   ; cong = λ x≈x′ → trans (F .cong x≈x′) ((F ⟨$⟩ _) .cong (G .cong x≈x′)) }
-  where open Setoid End
+  where open Setoid More
 
-ap : (From ⇨ To ⇨ End) ⟶ (From ⇨ To) ⇨ From ⇨ End
+ap : (From ⇨ To ⇨ More) ⟶ (From ⇨ To) ⇨ From ⇨ More
 ap = record
   { _⟨$⟩_ = λ F → record
     { _⟨$⟩_ = F ˢ_
@@ -103,7 +116,7 @@ ap = record
   ; cong = λ F⊖F′ → F⊖F′
   }
 
-flip : (From ⇨ To ⇨ End) ⟶ (To ⇨ From ⇨ End)
+flip : (From ⇨ To ⇨ More) ⟶ (To ⇨ From ⇨ More)
 flip = record
   { _⟨$⟩_ = λ F → record
     { _⟨$⟩_ = λ x → record

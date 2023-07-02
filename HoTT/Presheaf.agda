@@ -7,10 +7,9 @@ open import Relation.Binary.Core
 open import Relation.Binary.Bundles
 open import Relation.Binary.Structures
 open import HoTT.EqNotation hiding (isEquivalence; cong)
-open import HoTT.Setoid.Morphism as Mor hiding (id; _∘_)
+open import HoTT.Setoid.Morphism as Mor using (_⟶_; _⟨$⟩_; cong; _⊖_)
 open import Data.Nat.Base hiding (_⊔_; suc)
 open import HoTT.OFF
-open import HoTT.OFF.Properties
 open import Function.Base hiding (id; _∘_)
 
 private
