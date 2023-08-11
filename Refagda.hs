@@ -2,7 +2,7 @@ import System.Environment (getProgName, getArgs)
 import System.Exit (die)
 import System.Directory (doesFileExist, doesDirectoryExist, createDirectoryIfMissing, renameFile, listDirectory, removeDirectoryRecursive, renameDirectory, getCurrentDirectory, doesPathExist, removeDirectory)
 import System.FilePath (takeDirectory, (</>), (<.>))
-import Root (findRootFromDirectory, getPathByRoot)
+import Root (findRootFromDirectory, getPathByRoot, noAgdaLib)
 import System.IO (withFile, IOMode (ReadMode, WriteMode), hGetContents, hPutStr)
 import Control.Monad (when, zipWithM_, filterM)
 
@@ -80,7 +80,7 @@ main = do
             cwd <- getCurrentDirectory
             root <- findRootFromDirectory cwd
             case root of
-                Nothing -> die "Cannot fine .agda-lib file pointing to the project root"
+                Nothing -> noAgdaLib
                 Just p -> do
                     let oldDir = getPathByRoot old p
                         oldFile = oldDir <.> "agda"

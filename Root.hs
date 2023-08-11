@@ -1,9 +1,10 @@
 module Root where
 
 import System.IO (Handle, hIsEOF, hGetLine, withFile, IOMode(ReadMode))
-import System.FilePath (FilePath, (</>), isDrive, takeDirectory, normalise, pathSeparator)
+import System.FilePath (FilePath, (</>), isDrive, takeDirectory, normalise, pathSeparator, makeRelative, (<.>))
 import Control.Applicative (liftA2, (<|>))
-import System.Directory (listDirectory)
+import System.Directory (listDirectory, getCurrentDirectory)
+import System.Exit (die)
 
 extractRoot :: String -> Maybe String
 extractRoot s = end . init <$> (include (init s) >>= colon . init)
@@ -55,3 +56,17 @@ replace old new = fmap (\ x -> if x == old then new else x)
 
 getPathByRoot :: String -> FilePath -> FilePath
 getPathByRoot mod root = root </> replace '.' pathSeparator mod
+
+getFullInfoByRoot :: String -> FilePath -> IO (String, FilePath)
+getFullInfoByRoot ('.' : mod) root =
+    let rp = normalise $ replace '.' pathSeparator mod
+    in do
+        cwd <- getCurrentDirectory
+        let fp = cwd </> rp
+            fmod = replace pathSeparator '.' $ makeRelative root fp
+        return (fmod, fp <.> "agda")
+getFullInfoByRoot mod root =
+    return (mod, getPathByRoot mod root <.> "agda")
+
+noAgdaLib :: IO a
+noAgdaLib = die "Cannot fine .agda-lib file pointing to the project root"
