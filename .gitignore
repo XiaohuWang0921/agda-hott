@@ -1,5 +1,6 @@
 _build/
 *.agda~
+*.old
 \#*#
 
 .vscode/
