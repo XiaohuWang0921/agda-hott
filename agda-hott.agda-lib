@@ -1,3 +1,2 @@
 name: agda-hott
-depend: standard-library
 include: .
