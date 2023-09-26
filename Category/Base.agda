@@ -4,7 +4,8 @@ module Category.Base where
 
 open import Level
 open import Relation.Core
-open import Universe.Setoid.Base hiding (compose; _∘_; id)
+open import Universe.Setoid hiding (compose; _∘_; id)
+open import Relation.Equality.Core hiding (refl)
 
 record IsCategory {o m r} (Obj : Set o) ([_,_] : Obj → Obj → Setoid m r) : Set (o ⊔ m ⊔ r) where
 
@@ -14,10 +15,25 @@ record IsCategory {o m r} (Obj : Set o) ([_,_] : Obj → Obj → Setoid m r) : S
   infix 4 _≈_
   _≈_ : ∀ {X Y} → Rel (Mor X Y) r
   _≈_ {X} {Y} = Setoid._≈_ [ X , Y ]
-  
+
+  refl : ∀ {X Y} {f : Mor X Y} → f ≈ f
+  refl {X} {Y} = Setoid.refl [ X , Y ]
+
+  reflexive : ∀ {X Y} {f g : Mor X Y} → f ≡ g → f ≈ g
+  reflexive {X} {Y} = Setoid.reflexive [ X , Y ]
+
+  trig : ∀ {X Y} {f g h : Mor X Y} → g ≈ f → g ≈ h → f ≈ h
+  trig {X} {Y} = Setoid.trig [ X , Y ]
+
+  sym : ∀ {X Y} {f g : Mor X Y} → f ≈ g → g ≈ f
+  sym {X} {Y} = Setoid.sym [ X , Y ]
+
+  trans : ∀ {X Y} {f g h : Mor X Y} → f ≈ g → g ≈ h → f ≈ h
+  trans {X} {Y} = Setoid.trans [ X , Y ]
+
   field
     compose : ∀ {X Y Z} → [ Y , Z ] ⟶ [ X , Y ] ⇒ [ X , Z ]
-    id : ∀ {X} → Setoid.Carrier [ X , X ]
+    id : ∀ {X} → Mor X X
     
   infixr 9 _∘_
   _∘_ : ∀ {X Y Z} → Mor Y Z → Mor X Y → Mor X Z
@@ -32,8 +48,7 @@ opposite : ∀ {o m r} {Obj : Set o} {[_,_] : Obj → Obj → Setoid m r} → Is
 opposite {[_,_] = [_,_]} isCategory = record
   { compose = flip ⟨$⟩ compose
   ; assoc = λ f g h →
-    let open Setoid [ _ , _ ]
-    in sym (assoc h g f)
+    sym (assoc h g f)
   ; identityˡ = identityʳ
   ; identityʳ = identityˡ
   }

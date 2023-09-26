@@ -2,7 +2,7 @@ name:           agda-hott-dev
 version:        1.0.0.2
 build-type:     Simple
 description:    Developer tools
-tested-with:    GHC == 9.2.5
+tested-with:    GHC == 9.2.8
 
 executable Creagda
     hs-source-dirs:     .

@@ -4,4 +4,4 @@ module Category where
 
 open import Category.Base public
 
-open IsCategory {{...}}
+open IsCategory {{...}} public

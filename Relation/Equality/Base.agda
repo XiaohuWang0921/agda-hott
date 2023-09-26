@@ -9,20 +9,41 @@ open import Universe.Setoid.Base
 
 private
   variable
-    a : Level
+    a b c : Level
     A : Set a
+    B : Set b
+    C : Set c
+    x y z : A
+    u v : B
 
-sym : {a b : A} → a ≡ b → b ≡ a
+trig : y ≡ x → y ≡ z → x ≡ z
+trig refl p = p
+
+sym : x ≡ y → y ≡ x
 sym refl = refl
 
-trans : {a b c : A} → a ≡ b → b ≡ c → a ≡ c
+trans : x ≡ y → y ≡ z → x ≡ z
 trans refl p = p
+
+icong : {f : A → B} → x ≡ y → f x ≡ f y
+icong refl = refl
+
+icong₂ : {_∙_ : A → B → C} → x ≡ y → u ≡ v → x ∙ u ≡ y ∙ v
+icong₂ refl refl = refl
+
+cong : (f : A → B) → x ≡ y → f x ≡ f y
+cong _ = icong
+
+cong₂ : (_∙_ : A → B → C) → x ≡ y → u ≡ v → x ∙ u ≡ y ∙ v
+cong₂ _ = icong₂
+
+infixr 4.5 _=$=_
+_=$=_ = cong
 
 setoid : (A : Set a) → Setoid a a
 setoid A = record
   { Carrier = A
   ; _≈_ = _≡_
   ; refl = refl
-  ; sym = sym
-  ; trans = trans
+  ; trig = trig
   }
