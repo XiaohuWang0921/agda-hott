@@ -48,6 +48,11 @@ flip : (A → B → C) → B → A → C
 flip = (_∘ const) ∘ _ˢ_
 {-# INLINE flip #-}
 
+infixr -1 _$_
+_$_ : (A → B) → A → B
+_$_ = id
+{-# INLINE _$_ #-}
+
 infix 4 _≗_
 _≗_ :  Rel (A → B) _
 f ≗ g = ∀ x → f x ≡ g x

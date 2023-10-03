@@ -29,6 +29,8 @@ record _⇉_ {C : Category o m r} {D : Category p n s} (F G : Functor C D) : Set
     at : ∀ X → Mor (F <$> X) (G <$> X)
     isNatural : ∀ {X Y} (f : Mor X Y) → at Y ∘ (F -$- f) ≈ (G -$- f) ∘ at X
 
+open _⇉_ public
+
 infixr 4.5 _<&>_
 _<&>_ = _⇉_.at
 
@@ -97,3 +99,29 @@ compose {D = D} = record
 --     module E = Category E
 --     open _⇉_
 --     open Functor.Functor
+
+infixr 9 _⋉_
+_⋉_ : (F : Functor D E) {G H : Functor C D} → G ⇉ H → (F Functor.∘ G) ⇉ (F Functor.∘ H)
+_⋉_ {D = D} {E = E} F {G = G} {H = H} η = record
+  { at = λ X → F -$- η <&> X
+  ; isNatural = λ {X} {Y} f →
+    let open Equiv (E._≈_ {F <$> (G <$> X)} {F <$> (H <$> Y)}) E.refl E.trig
+    in (F -$- η <&> Y) E.∘ (F -$- G -$- f) ≈˘⟨ mor-∘ F _ _ ⟩
+       F -$- ((η <&> Y) D.∘ (G -$- f)) ≈⟨ mor-cong F (isNatural η f) ⟩
+       F -$- ((H -$- f) D.∘ (η <&> X)) ≈⟨ mor-∘ F _ _ ⟩
+       (F -$- H -$- f) E.∘ (F -$- η <&> X) ∎
+  }
+  where
+    module D = Category D
+    module E = Category E
+    open Functor.Functor
+    open _⇉_
+
+infixl 9 _⋊_
+_⋊_ : {F G : Functor D E} → F ⇉ G → (H : Functor C D) → (F Functor.∘ H) ⇉ (G Functor.∘ H)
+_⋊_ {D = D} {E = E} {F = F} {G = G} η H = record
+  { at = λ X → η <&> H <$> X
+  ; isNatural = λ f →
+    isNatural η (H -$- f)
+  }
+  where open _⇉_
