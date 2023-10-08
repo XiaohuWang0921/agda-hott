@@ -203,6 +203,23 @@ suc-injective refl = refl
     (id ∘ f ∣ g ∘ id) x ≈⟨ ∣-∘ id g f id x ⟩
     (id ∣ g) ((f ∣ id) x) ∎
   }
+
+inj+-natural : ∀ n → Id ⇉ +-functorˡ n
+inj+-natural n = record
+  { at = λ _ → inj+ n
+  ; isNatural = λ f i →
+    inj+ n (f i) ≡⟨⟩
+    join (inj₁ (f i)) ≡⟨⟩
+    join (Sum.map f id (inj₁ i)) ≈˘⟨ join =$= Sum.map f id =$= splitAt∘inj+ n i ⟩
+    join (Sum.map f id (splitAt _ (inj+ n i))) ≡⟨⟩
+    (f ∣ id) (inj+ n i) ∎
+  }
+
+ℕ+-natural : ∀ m → Id ⇉ +-functorʳ m
+ℕ+-natural m = record
+  { at = λ _ → m ℕ+_
+  ; isNatural = λ f i → join =$= Sum.map id f =$= sym (splitAt∘ℕ+ m i)
+  }
   
 *-functorˡ : ℕ → Functor FinCat FinCat
 *-functorˡ n = record
@@ -248,6 +265,22 @@ suc-injective refl = refl
     (id {A = Fin n} ∙ g) ((f ∙ id) x) ∎
   }
 
+extract-naturalˡ : ∀ n → *-functorˡ n ⇉ Id
+extract-naturalˡ n = record
+  { at = λ m → proj₁ ∘ extract m
+  ; isNatural = λ {l m} f i →
+    proj₁ (extract m ((f ∙ id) i)) ≡⟨⟩
+    proj₁ (extract m (uncurry combine (Product.map f id (extract l i)))) ≈⟨ proj₁ =$= extract∘combine _ _ ⟩
+    proj₁ (Product.map f id (extract l i)) ≡⟨⟩
+    f (proj₁ (extract l i)) ∎
+  }
+
+extract-naturalʳ : ∀ m → *-functorʳ m ⇉ Id
+extract-naturalʳ m = record
+  { at = λ _ → proj₂ ∘ extract m
+  ; isNatural = λ f i → proj₂ =$= extract∘combine (proj₁ (extract m i)) _
+  }
+
 -- swap∘swap : uncurry swap ∘₂ swap {n} ≗₂ _,_
 -- swap∘swap {suc _} zero j = refl
 -- swap∘swap (suc i) zero = refl
@@ -284,3 +317,14 @@ punchIn∘punchIn {suc _} zero _ _ = refl
 punchIn∘punchIn {suc _} (suc _) zero _ = refl
 punchIn∘punchIn (suc _) (suc _) zero = refl
 punchIn∘punchIn (suc i) (suc j) (suc k) = suc =$= punchIn∘punchIn i j k
+
+pinch∘pinch : ∀ (i : Fin n) j → pinch i ∘ pinch j ≗ pinch (pinch i j) ∘ pinch (punchIn j i)
+pinch∘pinch {suc _} _ _ zero = refl
+pinch∘pinch {suc _} _ zero (suc zero) = refl
+pinch∘pinch zero (suc j) (suc zero) = refl
+pinch∘pinch (suc zero) (suc j) (suc zero) = refl
+pinch∘pinch (suc (suc _)) (suc j) (suc zero) = refl
+pinch∘pinch zero zero (suc (suc k)) = refl
+pinch∘pinch (suc i) zero (suc (suc k)) = refl
+pinch∘pinch zero (suc j) (suc (suc k)) = refl
+pinch∘pinch (suc i) (suc j) (suc (suc k)) = suc =$= pinch∘pinch i j (suc k)

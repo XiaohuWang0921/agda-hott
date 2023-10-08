@@ -34,7 +34,7 @@ record Functor (C : Category o m r) (D : Category p n s) : Set (o ⊔ p ⊔ m �
   field
     mor-∘ : {X Y Z : Category.Obj C} (f : Mor Y Z) (g : Mor X Y) → mor (f ∘ g) ≈ mor f ∘ mor g
     mor-id : ∀ {X} → mor (id {X = X}) ≈ id {X = obj X}
-
+    
 infixl 5 _<$>_
 _<$>_ = Functor.obj
 
@@ -63,6 +63,15 @@ _∘_ {E = E} F G = record
   }
   where open Functor
         open Category E
+
+Opposite : Functor C D → Functor (Op C) (Op D)
+Opposite F = record
+  { obj = obj
+  ; hom = hom
+  ; mor-∘ = λ f g → mor-∘ g f
+  ; mor-id = mor-id
+  }
+  where open Functor F
 
 Embed : ∀ {a} {A : Set a} (open Category C) (f : A → Obj) → Functor (FullSub C f) C
 Embed {C = C} f = record
