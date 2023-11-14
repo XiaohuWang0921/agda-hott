@@ -2,7 +2,7 @@
 
 open import Universe.Setoid.Base
 
-module Relation.Reasoning.Setoid {a r} {{S : Setoid a r}} where
+module Relation.Reasoning.Setoid {a r} (S : Setoid a r) where
 
 open Setoid S
 

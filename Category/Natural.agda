@@ -18,16 +18,14 @@ private
 
 infixr 0 _⇉_
 record _⇉_ {C : Category o m r} {D : Category p n s} (F G : Functor C D) : Set (o ⊔ m ⊔ n ⊔ s) where
-  open Category {{...}}
 
   private
-    instance
-      categoryC = C
-      categoryD = D
+    module C = Category C
+    module D = Category D
 
   field
-    at : ∀ X → Mor (F <$> X) (G <$> X)
-    isNatural : ∀ {X Y} (f : Mor X Y) → at Y ∘ (F -$- f) ≈ (G -$- f) ∘ at X
+    at : ∀ X → D.Mor (F <$> X) (G <$> X)
+    isNatural : ∀ {X Y} (f : C.Mor X Y) → at Y D.∘ (F -$- f) D.≈ (G -$- f) D.∘ at X
 
 open _⇉_ public
 
@@ -78,6 +76,10 @@ compose {D = D} = record
   ; cong = λ ε≈ι η X → (D.compose ~$~ ε≈ι X) _
   }
   where module D = Category D
+
+-- op : {C : Category o l r} {D : Category p m s} {F G : Functor C D} → (F ⇛ G) ⟶ Opposite G ⇛ Opposite F
+-- op = record
+--   { func = λ η → record { at = η <&>_ ; isNatural = {!!} } ; cong = {!!} }
 
 -- infixr 9 _∙_
 -- _∙_ : {F G : Functor D E} {I J : Functor C D} → F ⇉ G → I ⇉ J → (F Functor.∘ I) ⇉ (G Functor.∘ J)

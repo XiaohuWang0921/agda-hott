@@ -6,26 +6,41 @@ open import Level
 open import Universe.Setoid.Base public
 open import Universe.Set as Set using ()
 import Relation.Reasoning
+open import Relation.Equality.Base as Eq using (_≡_)
+open import Data.Unit.Core
 
 infixr 0 _⟶_
 record _⟶_ {a b r s} (A : Setoid a r) (B : Setoid b s) : Set (a ⊔ b ⊔ r ⊔ s) where
 
   private
-    instance
-      setoidA = A
-      setoidB = B
-      
-    open Setoid {{...}}
+    module A = Setoid A
+    module B = Setoid B
 
   field
     func : Setoid.Carrier A → Setoid.Carrier B
-    cong : ∀ {x y} → x ≈ y → func x ≈ func y
+    cong : ∀ {x y} → x A.≈ y → func x B.≈ func y
 
 infixl 5 _⟨$⟩_
 _⟨$⟩_ = _⟶_.func
 
 infixr 4.5 _~$~_
 _~$~_ = _⟶_.cong
+
+Eq : ∀ {ℓ} → Set ℓ → Setoid ℓ ℓ
+Eq A = record
+  { Carrier = A
+  ; _≈_ = _≡_
+  ; refl = Eq.refl
+  ; trig = Eq.trig
+  }
+
+Trivial : ∀ {ℓ} → Set ℓ → Setoid ℓ 0ℓ
+Trivial A = record
+  { Carrier = A
+  ; _≈_ = λ _ _ → ⊤
+  ; refl = tt
+  ; trig = λ _ _ → tt
+  }
 
 infixr 0 _⇒_
 _⇒_ : ∀ {a b r s} (A : Setoid a r) (B : Setoid b s) → Setoid (a ⊔ b ⊔ r ⊔ s) (a ⊔ s)

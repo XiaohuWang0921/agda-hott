@@ -46,7 +46,7 @@ findRootFromAgdaLib hdl = do
 findRootFromDirectory :: FilePath -> IO (Maybe FilePath)
 findRootFromDirectory p = do
     agdaLibs <- ((p </>) <$>) . filter isAgdaLib <$> listDirectory p
-    root <- foldr (liftA2 (<|>)) (return Nothing) $ (\ lib -> withFile lib ReadMode findRootFromAgdaLib) <$> agdaLibs
+    root <- foldr (liftA2 (<|>) . (\ lib -> withFile lib ReadMode findRootFromAgdaLib)) (return Nothing) agdaLibs
     case root of
         Nothing -> if isDrive p then return Nothing else findRootFromDirectory $ takeDirectory p
         Just rp -> return $ Just $ normalise $ p </> rp

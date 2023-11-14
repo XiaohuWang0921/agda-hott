@@ -2,7 +2,8 @@
 
 module Data.Fin.Base where
 
-open import Data.Nat.Base
+open import Level hiding (_ℕ+_)
+open import Data.Nat.Base hiding (_≤_; _≤?_; _≟_)
 open import Data.Sum.Base as Sum
 open import Data.Product.Base as Product
 open import Universe.Set
@@ -10,6 +11,9 @@ open import Universe.Set.Categorical
 open import Category.Base
 open import Relation.Equality.Base
 open import Data.Empty.Base
+open import Data.Bool.Base hiding (_≟_)
+open import Relation.Core
+open import Algebra.Core
 
 data Fin : ℕ → Set where
   zero : ∀ {n} → Fin (suc n)
@@ -17,6 +21,14 @@ data Fin : ℕ → Set where
 
 FinCat : Category _ _ _
 FinCat = FullSub category Fin
+
+FinSucCat : Category _ _ _
+FinSucCat = FullSub FinCat suc
+
+_≟_ : ∀ {n} → Fin n → Fin n → Bool
+zero ≟ zero = true
+suc m ≟ suc n = m ≟ n
+_ ≟ _ = false
 
 infixr 6 _ℕ+_
 _ℕ+_ : ∀ m {n} → Fin n → Fin (m + n)
@@ -67,12 +79,6 @@ initial ()
 
 terminal : ∀ {a} {A : Set a} → A → Fin 1
 terminal _ = zero
-
-punchOut : {i j : Fin (suc n)} → .(i ≢ j) → Fin n
-punchOut {_} {zero} {zero} 0≢0 = ⊥-elim (0≢0 refl)
-punchOut {suc _} {zero} {suc j} _ = j
-punchOut {suc _} {suc _} {zero} _ = zero
-punchOut {suc _} {suc _} {suc _} si≢sj = suc (punchOut (si≢sj ∘ cong suc))
 
 swap : Fin (suc n) → Fin n → Fin (suc n) × Fin n
 swap {suc _} zero j = suc j , zero

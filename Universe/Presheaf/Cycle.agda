@@ -43,9 +43,9 @@ map {a} {r} {P} {Q} n = record
     { func = λ c → record
       { face = λ i → (η <&> suc n) ⟨$⟩ face c i
       ; compatible = λ i j →
-        (Q -$- punchIn i) ⟨$⟩ ((η <&> suc n) ⟨$⟩ face c j) ≈˘⟨ isNatural η _ _ ⟩
+        (Q -$- punchIn i) ⟨$⟩ ((η <&> suc n) ⟨$⟩ face c j) ≈⟨ isNatural η _ _ ⟩
         (η <&> n) ⟨$⟩ ((P -$- punchIn i) ⟨$⟩ face c j) ≈⟨ (η <&> n) ~$~ compatible c i j ⟩
-        (η <&> n) ⟨$⟩ ((P -$- punchIn (pinch i j)) ⟨$⟩ face c (punchIn j i)) ≈⟨ isNatural η _ _ ⟩
+        (η <&> n) ⟨$⟩ ((P -$- punchIn (pinch i j)) ⟨$⟩ face c (punchIn j i)) ≈˘⟨ isNatural η _ _ ⟩
         (Q -$- punchIn (pinch i j)) ⟨$⟩ ((η <&> suc n) ⟨$⟩ face c (punchIn j i)) ∎
       }
     ; cong = λ c≈d i → (η <&> suc n) ~$~ c≈d i

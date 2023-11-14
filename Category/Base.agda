@@ -6,6 +6,7 @@ open import Level
 open import Relation.Core
 open import Universe.Setoid hiding (compose; _∘_; id)
 open import Relation.Equality.Core hiding (refl)
+open import Data.Unit.Core
 
 record IsCategory {o m r} (Obj : Set o) ([_,_] : Obj → Obj → Setoid m r) : Set (o ⊔ m ⊔ r) where
 
@@ -63,6 +64,21 @@ fullSubcat F isCategory = record
   }
   where open IsCategory isCategory
 
+preorder : ∀ {a r} {A : Set a} {_≲_ : Rel A r} → (∀ {x} → x ≲ x) → (∀ {x y z} → x ≲ y → y ≲ z → x ≲ z) → IsCategory A (λ x y → Trivial (x ≲ y))
+preorder refl trans = record
+  { compose = record
+    { func = λ y≲z → record
+      { func = λ x≲y → trans x≲y y≲z
+      ; cong = λ _ → tt
+      }
+    ; cong = λ _ _ → tt
+    }
+  ; id = refl
+  ; assoc = λ _ _ _ → tt
+  ; identityˡ = λ _ → tt
+  ; identityʳ = λ _ → tt
+  }
+
 record Category o m r : Set (ℓsuc (o ⊔ m ⊔ r)) where
   field
     Obj : Set o
@@ -82,3 +98,10 @@ FullSub {A = A} Cat F = record
   { isCategory = fullSubcat F isCategory
   }
   where open Category Cat
+
+Preorder : ∀ {a r} {A : Set a} (_≲_ : Rel A r) → (∀ {x} → x ≲ x) → (∀ {x y z} → x ≲ y → y ≲ z → x ≲ z) → Category a r 0ℓ
+Preorder {A = A} _≲_ refl trans = record
+  { Obj = A
+  ; [_,_] = λ x y → Trivial (x ≲ y)
+  ; isCategory = preorder refl trans
+  }

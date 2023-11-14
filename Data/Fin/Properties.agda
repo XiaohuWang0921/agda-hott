@@ -6,8 +6,8 @@ open import Data.Fin.Base as Fin
 open import Relation.Equality.Base
 open import Data.Sum.Base as Sum
 open import Data.Product.Base as Product
-open import Data.Nat.Base
-open import Relation.Reasoning.Setoid
+open import Data.Nat.Base as ℕ hiding (_≟_)
+open import Relation.Reasoning.Set
 open import Relation.Equality.Base
 open import Universe.Set
 open import Data.Sum.Properties as Sumᵖ
@@ -15,11 +15,8 @@ open import Data.Product.Properties as Productᵖ
 open import Category.Functor hiding (_∘_)
 open import Category.Natural hiding (id; _∘_)
 open import Data.Empty.Base
-
-private
-  instance
-    ≡setoid : ∀ {a} {A : Set a} → _
-    ≡setoid {A = A} = setoid A
+open import Data.Bool.Base hiding (_≟_)
+open import Data.Unit.Core
 
 splitAt∘inj+ : ∀ {m} n → splitAt m ∘ inj+ n ≗ inj₁
 splitAt∘inj+ _ zero = refl
@@ -41,9 +38,9 @@ join∘splitAt (suc m) (suc i) with splitAt m i in eq
   suc (join (inj₁ j)) ≡˘⟨ suc =$= join =$= eq ⟩
   suc (join (splitAt m i)) ≡⟨ suc =$= join∘splitAt m i ⟩
   suc i ∎
---   where
---     open Relation.Reasoning (_≡_ {A = Fin _})
---     open Equiv refl trig
+--    where
+--      open Relation.Reasoning (_≡_ {A = Fin _})
+--      open Equiv refl trig
 ... | inj₂ j =
   join (Sum.map suc id (inj₂ j)) ≡⟨⟩
   join (inj₂ j) ≡⟨⟩
@@ -114,8 +111,19 @@ private
   variable
     k l m n o p : ℕ
 
+zero≢suc : {i : Fin n} → zero ≢ suc i
+zero≢suc ()
+
 suc-injective : {i j : Fin n} → Fin.suc i ≡ suc j → i ≡ j
 suc-injective refl = refl
+
+≟-Reflects-≡ : (i j : Fin n) → (i ≟ j) Reflects (i ≡ j)
+≟-Reflects-≡ zero zero = refl
+≟-Reflects-≡ zero (suc _) = zero≢suc
+≟-Reflects-≡ (suc _) zero = zero≢suc ∘ sym
+≟-Reflects-≡ (suc i) (suc j) with i ≟ j | ≟-Reflects-≡ i j
+... | false | i≢j = i≢j ∘ suc-injective
+... | true  | i≡j = suc =$= i≡j
 
 ++-cong : {f g : Fin l → Fin n} {h i : Fin m → Fin n} → f ≗ g → h ≗ i → f ++ h ≗ g ++ i
 ++-cong f≗g h≗i j = <⊹>-cong f≗g h≗i (splitAt _ j)
@@ -286,16 +294,16 @@ extract-naturalʳ m = record
 -- swap∘swap (suc i) zero = refl
 -- swap∘swap (suc i) (suc j) = Product.map suc suc =$= swap∘swap i j
 
-swap∘punchOut : {i j : Fin (suc n)} .(i≢j : i ≢ j) →
-                swap i (punchOut i≢j) ≡ (j , punchOut (i≢j ∘ sym))
-swap∘punchOut {_} {zero} {zero} 0≢0 = ⊥-elim (0≢0 refl)
-swap∘punchOut {suc _} {zero} {suc _} _ = refl
-swap∘punchOut {suc _} {suc _} {zero} _ = refl
-swap∘punchOut {suc _} {suc _} {suc _} si≢sj = Product.map suc suc =$= swap∘punchOut (si≢sj ∘ cong suc)
+-- swap∘punchOut : {i j : Fin (suc n)} .(i≢j : i ≢ j) →
+--                 swap i (punchOut i≢j) ≡ (j , punchOut (i≢j ∘ sym))
+-- swap∘punchOut {_} {zero} {zero} 0≢0 = ⊥-elim (0≢0 refl)
+-- swap∘punchOut {suc _} {zero} {suc _} _ = refl
+-- swap∘punchOut {suc _} {suc _} {zero} _ = refl
+-- swap∘punchOut {suc _} {suc _} {suc _} si≢sj = Product.map suc suc =$= swap∘punchOut (si≢sj ∘ cong suc)
 
-punchIn∘punchOut : {i j : Fin (suc n)} .(i≢j : i ≢ j) →
-                   punchIn i (punchOut i≢j) ≡ j
-punchIn∘punchOut i≢j = proj₁ =$= swap∘punchOut i≢j
+-- punchIn∘punchOut : {i j : Fin (suc n)} .(i≢j : i ≢ j) →
+--                    punchIn i (punchOut i≢j) ≡ j
+-- punchIn∘punchOut i≢j = proj₁ =$= swap∘punchOut i≢j
 
 punchIn-injective : ∀ i (j k : Fin n) → punchIn i j ≡ punchIn i k → j ≡ k
 punchIn-injective {suc _} zero _ _ sj≡sk = suc-injective sj≡sk
@@ -309,8 +317,8 @@ punchIn-≢ {suc _} zero _ ()
 punchIn-≢ (suc _) zero ()
 punchIn-≢ (suc i) (suc j) eq = punchIn-≢ i j (suc-injective eq)
 
-punchOut∘punchIn : ∀ i (j : Fin n) → punchOut (punchIn-≢ i j) ≡ j
-punchOut∘punchIn i j = punchIn-injective i (punchOut (punchIn-≢ i j)) j (punchIn∘punchOut (punchIn-≢ i j))
+-- punchOut∘punchIn : ∀ i (j : Fin n) → punchOut (punchIn-≢ i j) ≡ j
+-- punchOut∘punchIn i j = punchIn-injective i (punchOut (punchIn-≢ i j)) j (punchIn∘punchOut (punchIn-≢ i j))
 
 punchIn∘punchIn : ∀ i (j : Fin (suc n)) → punchIn i ∘ punchIn j ≗ punchIn (punchIn i j) ∘ punchIn (pinch j i)
 punchIn∘punchIn {suc _} zero _ _ = refl

@@ -14,26 +14,24 @@ private
     E : Category q n t
 
 record Functor (C : Category o m r) (D : Category p n s) : Set (o ⊔ p ⊔ m ⊔ n ⊔ r ⊔ s) where
-  open Category {{...}}
 
   private
-    instance
-      categoryC = C
-      categoryD = D
+    module C = Category C
+    module D = Category D
   
   field
     obj : Category.Obj C → Category.Obj D
-    hom : ∀ {X Y} → [ X , Y ] ⟶ [ obj X , obj Y ]
+    hom : ∀ {X Y} → C.[ X , Y ] ⟶ D.[ obj X , obj Y ]
 
-  mor : ∀ {X Y} → Mor X Y → Mor (obj X) (obj Y)
+  mor : ∀ {X Y} → C.Mor X Y → D.Mor (obj X) (obj Y)
   mor = hom ⟨$⟩_
 
-  mor-cong : {X Y : Category.Obj C} {f g : Mor X Y} → f ≈ g → mor f ≈ mor g
+  mor-cong : {X Y : Category.Obj C} {f g : C.Mor X Y} → f C.≈ g → mor f D.≈ mor g
   mor-cong = hom ~$~_
 
   field
-    mor-∘ : {X Y Z : Category.Obj C} (f : Mor Y Z) (g : Mor X Y) → mor (f ∘ g) ≈ mor f ∘ mor g
-    mor-id : ∀ {X} → mor (id {X = X}) ≈ id {X = obj X}
+    mor-∘ : {X Y Z : Category.Obj C} (f : C.Mor Y Z) (g : C.Mor X Y) → mor (f C.∘ g) D.≈ mor f D.∘ mor g
+    mor-id : ∀ {X} → mor (C.id {X = X}) D.≈ D.id
     
 infixl 5 _<$>_
 _<$>_ = Functor.obj
@@ -43,6 +41,15 @@ _-$-_ = Functor.mor
 
 infixr 4.25 _#$#_
 _#$#_ = Functor.mor-cong
+
+Const : Category.Obj D → Functor C D
+Const {D = D} X = record
+  { obj = λ _ → X
+  ; hom = const ⟨$⟩ id
+  ; mor-∘ = λ f g → sym (identityˡ id)
+  ; mor-id = refl
+  }
+  where open Category D
 
 Id : Functor C C
 Id {C = C} = record

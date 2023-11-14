@@ -5,7 +5,6 @@ module Relation.Equality.Base where
 open import Relation.Core
 open import Relation.Equality.Core public
 open import Level
-open import Universe.Setoid.Base
 open import Data.Empty.Base
 
 private
@@ -56,11 +55,3 @@ resp₂ _ = iresp₂
 
 infixr 4.5 _=$=_
 _=$=_ = cong
-
-setoid : (A : Set a) → Setoid a a
-setoid A = record
-  { Carrier = A
-  ; _≈_ = _≡_
-  ; refl = refl
-  ; trig = trig
-  }

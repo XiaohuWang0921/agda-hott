@@ -53,6 +53,10 @@ _$_ : (A → B) → A → B
 _$_ = id
 {-# INLINE _$_ #-}
 
+infixl 0 _|>_
+_|>_ : A → (A → B) → B
+_|>_ = flip _$_
+
 infix 4 _≗_
 _≗_ :  Rel (A → B) _
 f ≗ g = ∀ x → f x ≡ g x
