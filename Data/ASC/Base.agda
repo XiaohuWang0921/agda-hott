@@ -3,6 +3,7 @@
 module Data.ASC.Base where
 -- ASC stands for abstract simplicial complex
 open import Data.Bool.Base hiding (_≤?_)
+open import Data.Fin.Base
 open import Data.Fin.Subset.Base
 open import Data.Fin.Subset.Properties
 open import Data.Nat.Base as ℕ using (ℕ; zero; suc; _+_; _≤?_)
@@ -33,6 +34,9 @@ record ASC (n : ℕ) : Set where
   has-cong s≗t = ≤-antisym (has-⊆ (λ i → ≡⇒≤ (sym (s≗t i))))
                            (has-⊆ (λ i → ≡⇒≤ (s≗t i)))
 
+  Has-⊆ : ∀ {s t} → s ⊆ t → Has t → Has s
+  Has-⊆ s⊆t = T-≤ (has-⊆ s⊆t)
+
   field
     hasAllPoints : ∀ i → Has (singleton i)
 
@@ -50,6 +54,13 @@ all n = record
 
 cycle : ∀ n → ASC (2 + n)
 cycle n = record
-  { revMap = not-functor ∘ ⊆?-functorʳ (full (2 + n))
-  ; hasAllPoints = {!!}
+  { revMap = ≤?-functorˡ (1 + n) ∘ ∣∣-functor
+  ; hasAllPoints = λ i → resp (λ m → T (m ≤? 1 + n)) (sym (∣∣∘singleton i)) tt
   }
+
+preimages : ∀ {m n} → (Fin m → Fin n) → ASC n → ASC m
+preimages f asc = record
+  { revMap = revMap ∘ image-functor f
+  ; hasAllPoints = λ i → Has-⊆ (≗⇒⊆ (image-singleton f i)) (hasAllPoints (f i))
+  }
+  where open ASC asc

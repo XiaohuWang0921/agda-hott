@@ -9,13 +9,13 @@ open import Relation.Equality.Core as Eq
 infixr 2 step-≡ step-≡˘ _≡⟨⟩_
 
 step-≡ : ∀ x {y z} → y ≈ z → x ≡ y → x ≈ z
-step-≡ _ x≈z Eq.refl = x≈z
+step-≡ _ yRz Eq.refl = yRz
 
 step-≡˘ : ∀ x {y z} → y ≈ z → y ≡ x → x ≈ z
-step-≡˘ _ x≈z Eq.refl = x≈z
+step-≡˘ _ xRz Eq.refl = xRz
 
 _≡⟨⟩_ : ∀ x {y} → x ≈ y → x ≈ y
-_ ≡⟨⟩ x≈y = x≈y
+_ ≡⟨⟩ xRy = xRy
 
 syntax step-≡ x y≈z x≡y = x ≡⟨ x≡y ⟩ y≈z
 syntax step-≡˘ x y≈z y≡x = x ≡˘⟨ y≡x ⟩ y≈z

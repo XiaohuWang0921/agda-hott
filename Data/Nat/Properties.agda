@@ -22,25 +22,15 @@ suc-injective refl = refl
 pred≤pred : ∀ {m n} → suc m ≤ suc n → m ≤ n
 pred≤pred (s≤s m≤n) = m≤n
 
-≤?-≤ˡ : ∀ {l m n} → l ≤ m → (m ≤? n) Bool.≤ (l ≤? n)
-≤?-≤ˡ 0≤n = ≤-true
-≤?-≤ˡ {n = zero} (s≤s _) = b≤b
-≤?-≤ˡ {n = suc _} (s≤s l≤m) = ≤?-≤ˡ l≤m
+≤?-≤ : ∀ {k l m n} → k ≤ l → m ≤ n → (l ≤? m) Bool.≤ (k ≤? n)
+≤?-≤ 0≤n _ = ≤-true
+≤?-≤ (s≤s k≤l) 0≤n = false-≤
+≤?-≤ (s≤s k≤l) (s≤s m≤n) = ≤?-≤ k≤l m≤n
 
-≤?-≤ʳ : ∀ {l m n} → m ≤ n → (l ≤? m) Bool.≤ (l ≤? n)
-≤?-≤ʳ {zero} _ = b≤b
-≤?-≤ʳ {suc _} 0≤n = false-≤
-≤?-≤ʳ {suc l} (s≤s m≤n) = ≤?-≤ʳ {l} m≤n
-
-<?-≤ˡ : ∀ {l m n} → l ≤ m → (m <? n) Bool.≤ (l <? n)
-<?-≤ˡ {n = zero} _ = b≤b
-<?-≤ˡ {n = suc _} 0≤n = ≤-true
-<?-≤ˡ {n = suc n} (s≤s l≤m) = <?-≤ˡ {n = n} l≤m
-
-<?-≤ʳ : ∀ {l m n} → m ≤ n → (l <? m) Bool.≤ (l <? n)
-<?-≤ʳ 0≤n = false-≤
-<?-≤ʳ {zero} (s≤s m≤n) = b≤b
-<?-≤ʳ {suc _} (s≤s m≤n) = <?-≤ʳ m≤n
+<?-≤ : ∀ {k l m n} → k ≤ l → m ≤ n → (l <? m) Bool.≤ (k <? n)
+<?-≤ _ 0≤n = false-≤
+<?-≤ 0≤n (s≤s m≤n) = ≤-true
+<?-≤ (s≤s k≤l) (s≤s m≤n) = <?-≤ k≤l m≤n
 
 <?-Reflects-< : ∀ m n → (m <? n) Reflects (m < n)
 <?-Reflects-< _ zero ()
@@ -85,11 +75,22 @@ pred≤pred (s≤s m≤n) = m≤n
 ≤-Cat : Category 0ℓ 0ℓ 0ℓ
 ≤-Cat = Preorder _≤_ ≤-refl ≤-trans
 
+suc-functor : Functor ≤-Cat ≤-Cat
+suc-functor = record
+  { obj = suc
+  ; hom = record
+    { func = s≤s
+    ; cong = λ _ → tt
+    }
+  ; mor-∘ = λ _ _ → tt
+  ; mor-id = tt
+  }
+
 ≤?-functorˡ : ℕ → Functor ≤-Cat (Op Boolₚ.≤-Cat)
 ≤?-functorˡ n = record
   { obj = _≤? n
   ; hom = record
-    { func = ≤?-≤ˡ
+    { func = flip ≤?-≤ ≤-refl
     ; cong = λ _ → tt
     }
   ; mor-∘ = λ _ _ → tt
@@ -100,7 +101,7 @@ pred≤pred (s≤s m≤n) = m≤n
 ≤?-functorʳ n = record
   { obj = n ≤?_
   ; hom = record
-    { func = ≤?-≤ʳ {n}
+    { func = ≤?-≤ {n} ≤-refl
     ; cong = λ _ → tt
     }
   ; mor-∘ = λ _ _ → tt
@@ -111,7 +112,7 @@ pred≤pred (s≤s m≤n) = m≤n
 <?-functorˡ n = record
   { obj = _<? n
   ; hom = record
-    { func = <?-≤ˡ {n = n}
+    { func = flip (<?-≤ {m = n}) ≤-refl
     ; cong = λ _ → tt
     }
   ; mor-∘ = λ _ _ → tt
@@ -122,7 +123,7 @@ pred≤pred (s≤s m≤n) = m≤n
 <?-functorʳ n = record
   { obj = n <?_
   ; hom = record
-    { func = <?-≤ʳ
+    { func = <?-≤ ≤-refl
     ; cong = λ _ → tt
     }
   ; mor-∘ = λ _ _ → tt

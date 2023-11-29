@@ -22,3 +22,5 @@ record Setoid a r : Set (ℓsuc (a ⊔ r)) where
 
   trans : ∀ {x y z} → x ≈ y → y ≈ z → x ≈ z
   trans x≈y y≈z = trig (sym x≈y) y≈z
+
+open Setoid public

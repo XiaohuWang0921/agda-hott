@@ -4,7 +4,7 @@ module Universe.Set where
 
 open import Level
 open import Relation.Core
-open import Universe.Setoid.Base
+open import Universe.Setoid.Base hiding (refl; sym; trans; trig)
 open import Relation.Equality.Base
 
 record Lift {a} b (A : Set a) : Set (a ⊔ b) where

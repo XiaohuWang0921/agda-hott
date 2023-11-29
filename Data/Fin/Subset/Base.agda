@@ -67,4 +67,14 @@ preimage = flip _∘_
 
 image : ∀ {m n} → (Fin m → Fin n) → Subset m → Subset n
 image {zero} = const (const (const false))
-image {suc _} f s = singleton (f zero) ∪ image (f ∘ suc) (s ∘ suc)
+image {suc _} f s = (const (head s) ∩ singleton (f zero)) ∪ image (f ∘ suc) (s ∘ suc)
+
+subSub : (s : Subset n) → Subset ∣ s ∣ → Subset n
+subSub {zero} _ t = t
+subSub {suc _} s t with head s
+... | false = λ where
+  zero → false
+  (suc i) → subSub (tail s) t i
+... | true = λ where
+  zero → head t
+  (suc i) → subSub (tail s) (tail t) i

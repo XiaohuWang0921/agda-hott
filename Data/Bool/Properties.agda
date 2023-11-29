@@ -53,19 +53,24 @@ not-≤ f≤t = f≤t
 T-≤ : ∀ {a b} → .(a ≤ b) → T a → T b
 T-≤ {true} {true} _ _ = tt
 
-≤?-≤ˡ : ∀ {a b c} → a ≤ b → (b ≤? c) ≤ (a ≤? c)
-≤?-≤ˡ b≤b = b≤b
-≤?-≤ˡ f≤t = ≤-true
-
-≤?-≤ʳ : ∀ {a b c} → b ≤ c → (a ≤? b) ≤ (a ≤? c)
-≤?-≤ʳ b≤b = b≤b
-≤?-≤ʳ {false} f≤t = b≤b
-≤?-≤ʳ {true} f≤t = f≤t
+≤?-≤ : ∀ {a b c d} → a ≤ b → c ≤ d → (b ≤? c) ≤ (a ≤? d)
+≤?-≤ {false} {false} _ = const b≤b
+≤?-≤ {false} {true} _ = const ≤-true
+≤?-≤ {true} {true} _ = id
 
 ∧-≤ : ∀ {a b c d} → a ≤ b → c ≤ d → a ∧ c ≤ b ∧ d
-∧-≤ {false} {false} _ _ = b≤b
-∧-≤ {false} {true} _ _ = false-≤
-∧-≤ {true} {true} _ = id
+∧-≤ {false} {false} = const (const b≤b)
+∧-≤ {false} {true} = const (const false-≤)
+∧-≤ {true} {true} = const id
+
+∨-≤ : ∀ {a b c d} → a ≤ b → c ≤ d → a ∨ c ≤ b ∨ d
+∨-≤ {false} {false} = const id
+∨-≤ {false} {true} = const (const ≤-true)
+∨-≤ {true} {true} = const (const b≤b)
+
+∨-false : ∀ b → b ∨ false ≡ b
+∨-false false = refl
+∨-false true = refl
 
 ≤-refl : ∀ {b} → b ≤ b
 ≤-refl = b≤b
@@ -111,7 +116,7 @@ not-functor = record
 ≤?-functorˡ b = record
   { obj = _≤? b
   ; hom = record
-    { func = ≤?-≤ˡ
+    { func = flip ≤?-≤ ≤-refl
     ; cong = λ _ → tt
     }
   ; mor-∘ = λ _ _ → tt
@@ -122,7 +127,7 @@ not-functor = record
 ≤?-functorʳ b = record
   { obj = b ≤?_
   ; hom = record
-    { func = ≤?-≤ʳ
+    { func = ≤?-≤ ≤-refl
     ; cong = λ _ → tt
     }
   ; mor-∘ = λ _ _ → tt
