@@ -31,6 +31,7 @@ open _⇉_ public
 
 infixr 4.5 _<&>_
 _<&>_ = _⇉_.at
+{-# DISPLAY at η X = η <&> X #-}
 
 infixr 0 _⇛_
 _⇛_ : Functor C D → Functor C D → Setoid _ _
@@ -102,7 +103,7 @@ _⋉_ : (F : Functor D E) {G H : Functor C D} → G ⇉ H → (F Functor.∘ G) 
 (F ⋉ η) .at X = F -$- η <&> X
 _⋉_ {D = D} {E = E} F {G = G} {H = H} η .isNatural {X} {Y} f =
   (F -$- η <&> Y) E.∘ (F -$- G -$- f) ≈˘⟨ mor-∘ F _ _ ⟩
-  F -$- ((η <&> Y) D.∘ (G -$- f)) ≈⟨ mor-cong F (isNatural η f) ⟩
+  F -$- ((η <&> Y) D.∘ (G -$- f)) ≈⟨ F #$# isNatural η f ⟩
   F -$- ((H -$- f) D.∘ (η <&> X)) ≈⟨ mor-∘ F _ _ ⟩
   (F -$- H -$- f) E.∘ (F -$- η <&> X) ∎
   where module D = Category D
@@ -114,3 +115,11 @@ infixl 9 _⋊_
 _⋊_ : {F G : Functor D E} → F ⇉ G → (H : Functor C D) → (F Functor.∘ H) ⇉ (G Functor.∘ H)
 (η ⋊ H) .at X = η <&> H <$> X
 (η ⋊ H) .isNatural f = isNatural η (H -$- f)
+
+postCompose : (F : Functor D E) {G H : Functor C D} → (G ⇛ H) ⟶ (F Functor.∘ G) ⇛ (F Functor.∘ H)
+postCompose F .func = F ⋉_
+postCompose F .cong η≈ε X = F #$# η≈ε X
+
+preCompose : {F G : Functor D E} (H : Functor C D) → (F ⇛ G) ⟶ (F Functor.∘ H) ⇛ (G Functor.∘ H)
+preCompose H .func = _⋊ H
+preCompose H .cong η≈ε X = η≈ε (H <$> X)

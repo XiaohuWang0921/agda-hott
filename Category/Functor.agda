@@ -37,12 +37,17 @@ open Functor public
     
 infixl 5 _<$>_
 _<$>_ = obj
+{-# DISPLAY obj F X = F <$> X #-}
 
 infixr 4.5 _-$-_
 _-$-_ = mor
+{-# DISPLAY mor F X = F -$- X #-}
+{-# DISPLAY hom F ⟨$⟩ X = F -$- X #-}
 
 infixr 4.25 _#$#_
 _#$#_ = mor-cong
+{-# DISPLAY mor-cong F X = F #$# X #-}
+{-# DISPLAY hom F ~$~ X = F #$# X #-}
 
 Id : Functor C C
 Id .obj = λ X → X

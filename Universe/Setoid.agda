@@ -23,10 +23,12 @@ record _⟶_ {a b r s} (A : Setoid a r) (B : Setoid b s) : Set (a ⊔ b ⊔ r �
 open _⟶_ public
 
 infixl 5 _⟨$⟩_
-_⟨$⟩_ = _⟶_.func
+_⟨$⟩_ = func
+{-# DISPLAY func f x = f ⟨$⟩ x #-}
 
 infixr 4.5 _~$~_
-_~$~_ = _⟶_.cong
+_~$~_ = cong
+{-# DISPLAY cong f e = f ~$~ e #-}
 
 Eq : ∀ {ℓ} → Set ℓ → Setoid ℓ ℓ
 Eq A .Carrier = A
