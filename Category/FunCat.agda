@@ -8,6 +8,7 @@ open import Category.Functor
 open import Category.Natural as Natural hiding (compose; id; _∘_)
 open import Universe.Setoid as Setoid hiding (id; compose; _∘_; _ˢ_)
 import Relation.Reasoning
+import Universe.Setoid.Categorical as SetoidCat
 
 private
   variable
@@ -30,6 +31,18 @@ category C D = categoryCD
     categoryCD .assoc _ _ _ _ = D.assoc _ _ _
     categoryCD .identityˡ _ _ = D.identityˡ _
     categoryCD .identityʳ _ _ = D.identityʳ _
+
+Hom : (C : Category o m r) → Functor (Op C) (category C (SetoidCat.category m r))
+Hom C .obj X .obj Y = let open Category C in [ X , Y ]
+Hom C .obj X .hom = Category.compose C
+Hom C .obj X .mor-∘ = Category.assoc C
+Hom C .obj X .mor-id = Category.identityˡ C
+Hom C .hom {X} {Y} .func f .at _ = λ→ Category.compose C - f
+Hom C .hom .func f .isNatural g h = Category.assoc C g h f
+Hom C .hom .cong f≈g _ h = Category.compose C ⟨$⟩ h ~$~ f≈g
+Hom C .mor-∘ {Z = Z} f g W h =
+  let module C = Category C in sym C.[ Z , W ] (C.assoc h g f)
+Hom C .mor-id _ = Category.identityʳ C
 
 Const : Functor C (category D C)
 Const {C = C} = ConstC

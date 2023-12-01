@@ -51,8 +51,8 @@ record Category o m r : Set (ℓsuc (o ⊔ m ⊔ r)) where
     identityˡ : ∀ {X Y} (f : Mor X Y) → id ∘ f ≈ f
     identityʳ : ∀ {X Y} (f : Mor X Y) → f ∘ id ≈ f
 
-{-# DISPLAY Category.[_,_] C X Y = X ⇒ Y #-}
-{-# DISPLAY Category.compose ⟨$⟩ f ⟨$⟩ g = f Universe.Setoid.∘ g #-}
+-- {-# DISPLAY Category.[_,_] C X Y = X ⇒ Y #-}
+-- {-# DISPLAY Category.compose ⟨$⟩ f ⟨$⟩ g = f Universe.Setoid.∘ g #-}
 
 open Category
 
