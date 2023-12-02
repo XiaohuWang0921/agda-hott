@@ -21,7 +21,7 @@ record Functor (C : Category o m r) (D : Category p n s) : Set (o ⊔ p ⊔ m �
   
   field
     obj : Category.Obj C → Category.Obj D
-    hom : ∀ {X Y} → C.[ X , Y ] ⟶ D.[ obj X , obj Y ]
+    hom : ∀ {X Y} → C [ X , Y ] ⟶ D [ obj X , obj Y ]
 
   mor : ∀ {X Y} → C.Mor X Y → D.Mor (obj X) (obj Y)
   mor = hom ⟨$⟩_

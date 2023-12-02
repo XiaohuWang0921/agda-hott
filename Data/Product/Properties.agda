@@ -5,10 +5,12 @@ module Data.Product.Properties where
 open import Level
 open import Data.Product.Base
 open import Universe.Set
-open import Relation.Equality.Base
+open import Relation.Equality.Base hiding (cong)
 open import Universe.Set.Categorical
 open import Category.Functor hiding (_∘_)
 open import Category.Natural hiding (id; _∘_)
+open import Category.FunCat
+open import Universe.Setoid using (func; cong)
 
 private
   variable
@@ -62,34 +64,14 @@ map-∘ _ _ _ _ = refl
 map-id : map id id ≡ id {A = A × B}
 map-id = refl
 
-×-functorˡ : ∀ {a b} → Set b → Functor (category {a}) (category {a ⊔ b})
-×-functorˡ B = record
-  { obj = _× B
-  ; hom = record
-    { func = flip map id
-    ; cong = map-congˡ
-    }
-  ; mor-∘ = λ _ _ _ → refl
-  ; mor-id = λ _ → refl }
-
-×-functorʳ : ∀ {a b} → Set a → Functor (category {b}) (category {a ⊔ b})
-×-functorʳ A = record
-  { obj = A ×_
-  ; hom = record
-    { func = map id
-    ; cong = map-congʳ
-    }
-  ; mor-∘ = λ _ _ _ → refl
-  ; mor-id = λ _ → refl }
-
-×-naturalˡ : ∀ {a b} {A B : Set b} → (A → B) → ×-functorˡ {a} {b} A ⇉ ×-functorˡ B
-×-naturalˡ f = record
-  { at = λ _ → map id f
-  ; isNatural = λ _ _ → refl
-  }
-
-×-naturalʳ : ∀ {a b} {A B : Set a} → (A → B) → ×-functorʳ {a} {b} A ⇉ ×-functorʳ B
-×-naturalʳ f = record
-  { at = λ _ → map f id
-  ; isNatural = λ _ _ → refl
-  }
+×-functor : ∀ {a b} → Functor (SetCat a) (FunCat (SetCat b) (SetCat (a ⊔ b)))
+×-functor .obj A .obj B = A × B
+×-functor .obj _ .hom .func = map id
+×-functor .obj _ .hom .cong = map-congʳ
+×-functor .obj _ .mor-∘ _ _ _ = refl
+×-functor .obj _ .mor-id _ = refl
+×-functor .hom .func f .at _ = map f id
+×-functor .hom .func _ .isNatural _ _ = refl
+×-functor .hom .cong f≈g _ = map-congˡ f≈g
+×-functor .mor-∘ _ _ _ _ = refl
+×-functor .mor-id _ _ = refl

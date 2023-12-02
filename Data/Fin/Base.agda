@@ -14,13 +14,14 @@ open import Data.Empty.Base
 open import Data.Bool.Base hiding (_≟_)
 open import Relation.Core
 open import Algebra.Core
+open import Category.FunCat
 
 data Fin : ℕ → Set where
   zero : ∀ {n} → Fin (suc n)
   suc  : ∀ {n} → Fin n → Fin (suc n)
 
 FinCat : Category _ _ _
-FinCat = FullSub category Fin
+FinCat = FullSub (SetCat 0ℓ) Fin
 
 FinSucCat : Category _ _ _
 FinSucCat = FullSub FinCat suc

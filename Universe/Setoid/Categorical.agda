@@ -8,11 +8,11 @@ open import Universe.Setoid
 
 open Category hiding (compose; id)
 
-category : ∀ a r → Category (ℓsuc (a ⊔ r)) (a ⊔ r) (a ⊔ r)
-category a r .Obj = Setoid a r
-category _ _ .[_,_] = _⇒_
-category _ _ .Category.compose = compose
-category _ _ .Category.id = id
-category _ _ .assoc {Z = Z} _ _ _ _ = Setoid.refl Z
-category _ _ .identityˡ {Y = Y} _ _ = Setoid.refl Y
-category _ _ .identityʳ {Y = Y} _ _ = Setoid.refl Y
+SetoidCat : ∀ a r → Category (ℓsuc (a ⊔ r)) (a ⊔ r) (a ⊔ r)
+SetoidCat a r .Obj = Setoid a r
+SetoidCat _ _ ._⊸_ = _⇒_
+SetoidCat _ _ .Category.compose = compose
+SetoidCat _ _ .Category.id = id
+SetoidCat _ _ .assoc {Z = Z} _ _ _ _ = Setoid.refl Z
+SetoidCat _ _ .identityˡ {Y = Y} _ _ = Setoid.refl Y
+SetoidCat _ _ .identityʳ {Y = Y} _ _ = Setoid.refl Y

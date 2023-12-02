@@ -2,4 +2,4 @@
 
 module Universe.Presheaf.Categorical where
 
-open import Category.FunCat public
+open import Category.FunCat public renaming (FunCat to PresheafCat) using ()

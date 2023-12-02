@@ -3,12 +3,10 @@
 module Data.Fin.Properties where
 
 open import Data.Fin.Base as Fin
-open import Relation.Equality.Base
+open import Relation.Equality.Base hiding (cong)
 open import Data.Sum.Base as Sum
 open import Data.Product.Base as Product
 open import Data.Nat.Base as ℕ hiding (_≟_)
-open import Relation.Reasoning.Set
-open import Relation.Equality.Base
 open import Universe.Set
 open import Data.Sum.Properties as Sumᵖ
 open import Data.Product.Properties as Productᵖ
@@ -17,6 +15,9 @@ open import Category.Natural hiding (id; _∘_)
 open import Data.Empty.Base
 open import Data.Bool.Base hiding (_≟_)
 open import Data.Unit.Core
+open import Relation.Reasoning.Set
+open import Category.FunCat
+open import Universe.Setoid using (func; cong)
 
 splitAt∘inj+ : ∀ {m} n → splitAt m ∘ inj+ n ≗ inj₁
 splitAt∘inj+ _ zero = refl
@@ -140,6 +141,12 @@ suc-injective refl = refl
 ∣-cong : {f g : Fin k → Fin m} {h i : Fin l → Fin n} → f ≗ g → h ≗ i → f ∣ h ≗ g ∣ i
 ∣-cong f≗g h≗i j = join =$= Sumᵖ.map-cong f≗g h≗i (splitAt _ j)
 
+∣-congˡ : {f g : Fin k → Fin m} {h : Fin l → Fin n} → f ≗ g → f ∣ h ≗ g ∣ h
+∣-congˡ f≗g = ∣-cong f≗g λ _ → refl
+
+∣-congʳ : {f : Fin k → Fin m} {h i : Fin l → Fin n} → h ≗ i → f ∣ h ≗ f ∣ i
+∣-congʳ = ∣-cong λ _ → refl
+
 ∣-∘ : (f : Fin n → Fin p) (g : Fin m → Fin o) (h : Fin l → Fin n) (i : Fin k → Fin m) → f ∘ h ∣ g ∘ i ≗ (f ∣ g) ∘ (h ∣ i)
 ∣-∘ f g h i j = join =$=
   (Sum.map (f ∘ h) (g ∘ i) (splitAt _ j) ≈⟨ Sumᵖ.map-∘ f h g i (splitAt _ j) ⟩
@@ -162,148 +169,84 @@ suc-injective refl = refl
 ∙-cong : {f g : Fin k → Fin m} {h i : Fin l → Fin n} → f ≗ g → h ≗ i → f ∙ h ≗ g ∙ i
 ∙-cong f≗g h≗i j = uncurry combine =$= Productᵖ.map-cong f≗g h≗i (extract _ j)
 
+∙-congˡ : {f g : Fin k → Fin m} {h : Fin l → Fin n} → f ≗ g → f ∙ h ≗ g ∙ h
+∙-congˡ {h = h} f≗g = ∙-cong {h = h} f≗g λ _ → refl
+
+∙-congʳ : {f : Fin k → Fin m} {h i : Fin l → Fin n} →  h ≗ i → f ∙ h ≗ f ∙ i
+∙-congʳ {f = f} = ∙-cong {f = f} λ _ → refl
+
 ∙-∘ : (f : Fin n → Fin p) (g : Fin m → Fin o) (h : Fin l → Fin n) (i : Fin k → Fin m) → f ∘ h ∙ g ∘ i ≗ (f ∙ g) ∘ (h ∙ i)
 ∙-∘ f g h i j = uncurry combine =$= Product.map f g =$= sym (extract∘combine _ _)
 
 ∙-id : id {A = Fin m} ∙ id {A = Fin n} ≗ id
 ∙-id {m} = combine∘extract m
 
-+-functorˡ : ℕ → Functor FinCat FinCat
-+-functorˡ n = record
-  { obj = _+ n
-  ; hom = record
-    { func = _∣ id
-    ; cong = flip ∣-cong λ _ → refl
-    }
-  ; mor-∘ = λ f g → ∣-∘ f id g id
-  ; mor-id = λ {m} → ∣-id {m = m}
-  }
++-functor : Functor FinCat (FunCat FinCat FinCat)
++-functor .obj m .obj n = m + n
++-functor .obj _ .hom .func = id ∣_
++-functor .obj _ .hom .cong = ∣-congʳ
++-functor .obj _ .mor-∘ f g = ∣-∘ id f id g
++-functor .obj _ .mor-id {n} = ∣-id {n = n}
++-functor .hom .func f .at n = f ∣ id
++-functor .hom .func f .isNatural g i =
+  (f ∣ id) ((id ∣ g) i) ≡˘⟨ ∣-∘ f id id g i ⟩
+  (f ∘ id ∣ id ∘ g) i ≡⟨⟩
+  (f ∣ g) i ≡⟨⟩
+  (id ∘ f ∣ g ∘ id) i ≡⟨ ∣-∘ id g f id i ⟩
+  (id ∣ g) ((f ∣ id) i) ∎
++-functor .hom .cong f≈g _ = ∣-congˡ f≈g
++-functor .mor-∘ f g _ = ∣-∘ f id g id
++-functor .mor-id {m} _ = ∣-id {m = m}
 
-+-functorʳ : ℕ → Functor FinCat FinCat
-+-functorʳ m = record
-  { obj = m +_
-  ; hom = record
-    { func = id ∣_
-    ; cong = ∣-cong λ _ → refl
-    }
-  ; mor-∘ = λ f g → ∣-∘ id f id g
-  ; mor-id = λ {n} → ∣-id {n = n}
-  }
+-- inj+-natural : ∀ n → Id ⇉ +-functorˡ n
+-- inj+-natural n = record
+--   { at = λ _ → inj+ n
+--   ; isNatural = λ f i →
+--     inj+ n (f i) ≡⟨⟩
+--     join (inj₁ (f i)) ≡⟨⟩
+--     join (Sum.map f id (inj₁ i)) ≈˘⟨ join =$= Sum.map f id =$= splitAt∘inj+ n i ⟩
+--     join (Sum.map f id (splitAt _ (inj+ n i))) ≡⟨⟩
+--     (f ∣ id) (inj+ n i) ∎
+--   }
 
-+-naturalˡ : (Fin m → Fin n) → +-functorˡ m ⇉ +-functorˡ n
-+-naturalˡ f = record
-  { at = λ _ → id ∣ f
-  ; isNatural = λ g x →
-    (id ∣ f) ((g ∣ id) x) ≈˘⟨ ∣-∘ id f g id x ⟩
-    (id ∘ g ∣ f ∘ id) x ≡⟨⟩
-    (g ∣ f) x ≡⟨⟩
-    (g ∘ id ∣ id ∘ f) x ≈⟨ ∣-∘ g id id f x ⟩
-    (g ∣ id) ((id ∣ f) x) ∎
-  }
+-- ℕ+-natural : ∀ m → Id ⇉ +-functorʳ m
+-- ℕ+-natural m = record
+--   { at = λ _ → m ℕ+_
+--   ; isNatural = λ f i → join =$= Sum.map id f =$= sym (splitAt∘ℕ+ m i)
+--   }
 
-+-naturalʳ : (Fin m → Fin n) → +-functorʳ m ⇉ +-functorʳ n
-+-naturalʳ f = record
-  { at = λ _ → f ∣ id
-  ; isNatural = λ g x →
-    (f ∣ id) ((id ∣ g) x) ≈˘⟨ ∣-∘ f id id g x ⟩
-    (f ∘ id ∣ id ∘ g) x ≡⟨⟩
-    (f ∣ g) x ≡⟨⟩
-    (id ∘ f ∣ g ∘ id) x ≈⟨ ∣-∘ id g f id x ⟩
-    (id ∣ g) ((f ∣ id) x) ∎
-  }
+*-functor : Functor FinCat (FunCat FinCat FinCat)
+*-functor .obj m .obj n = m * n
+*-functor .obj m .hom .func = id {A = Fin m} ∙_
+*-functor .obj m .hom .cong = ∙-congʳ {k = m} {f = id}
+*-functor .obj m .mor-∘ f g = ∙-∘ {n = m} id f id g
+*-functor .obj m .mor-id {n} = ∙-id {m = m} {n = n}
+*-functor .hom .func f .at n = f ∙ id
+*-functor .hom {m} {n} .func f .isNatural g i =
+  (f ∙ id) ((id {A = Fin m} ∙ g) i) ≡˘⟨ ∙-∘ f id id g i ⟩
+  (f ∘ id ∙ id ∘ g) i ≡⟨⟩
+  (f ∙ g) i ≡⟨⟩
+  (id ∘ f ∙ g ∘ id) i ≡⟨ ∙-∘ id g f id i ⟩
+  (id {A = Fin n} ∙ g) ((f ∙ id) i) ∎
+*-functor .hom .cong f≈g _ = ∙-congˡ {h = id} f≈g
+*-functor .mor-∘ f g _ = ∙-∘ f id g id
+*-functor .mor-id {m} _ = ∙-id {m = m}
 
-inj+-natural : ∀ n → Id ⇉ +-functorˡ n
-inj+-natural n = record
-  { at = λ _ → inj+ n
-  ; isNatural = λ f i →
-    inj+ n (f i) ≡⟨⟩
-    join (inj₁ (f i)) ≡⟨⟩
-    join (Sum.map f id (inj₁ i)) ≈˘⟨ join =$= Sum.map f id =$= splitAt∘inj+ n i ⟩
-    join (Sum.map f id (splitAt _ (inj+ n i))) ≡⟨⟩
-    (f ∣ id) (inj+ n i) ∎
-  }
+-- extract-naturalˡ : ∀ n → *-functorˡ n ⇉ Id
+-- extract-naturalˡ n = record
+--   { at = λ m → proj₁ ∘ extract m
+--   ; isNatural = λ {l m} f i →
+--     proj₁ (extract m ((f ∙ id) i)) ≡⟨⟩
+--     proj₁ (extract m (uncurry combine (Product.map f id (extract l i)))) ≈⟨ proj₁ =$= extract∘combine _ _ ⟩
+--     proj₁ (Product.map f id (extract l i)) ≡⟨⟩
+--     f (proj₁ (extract l i)) ∎
+--   }
 
-ℕ+-natural : ∀ m → Id ⇉ +-functorʳ m
-ℕ+-natural m = record
-  { at = λ _ → m ℕ+_
-  ; isNatural = λ f i → join =$= Sum.map id f =$= sym (splitAt∘ℕ+ m i)
-  }
-  
-*-functorˡ : ℕ → Functor FinCat FinCat
-*-functorˡ n = record
-  { obj = _* n
-  ; hom = record
-    { func = _∙ id
-    ; cong = flip (∙-cong {h = id}) λ _ → refl
-    }
-  ; mor-∘ = λ f g → ∙-∘ f id g id
-  ; mor-id = λ {m} → ∙-id {m = m}
-  }
-
-*-functorʳ : ℕ → Functor FinCat FinCat
-*-functorʳ m = record
-  { obj = m *_
-  ; hom = record
-    { func = id {A = Fin m} ∙_
-    ; cong = ∙-cong {k = m} {f = id} λ _ → refl
-    }
-  ; mor-∘ = λ f g → ∙-∘ {n = m} id f id g
-  ; mor-id = λ {n} → ∙-id {m = m} {n = n}
-  }
-
-*-naturalˡ : (Fin m → Fin n) → *-functorˡ m ⇉ *-functorˡ n
-*-naturalˡ f = record
-  { at = λ m → id {A = Fin m} ∙ f
-  ; isNatural = λ {m n} g x →
-    (id {A = Fin n} ∙ f) ((g ∙ id) x) ≈˘⟨ ∙-∘ id f g id x ⟩
-    (id ∘ g ∙ f ∘ id) x ≡⟨⟩
-    (g ∙ f) x ≡⟨⟩
-    (g ∘ id ∙ id ∘ f) x ≈⟨ ∙-∘ g id id f x ⟩
-    (g ∙ id) ((id {A = Fin m} ∙ f) x) ∎
-  }
-
-*-naturalʳ : (Fin m → Fin n) → *-functorʳ m ⇉ *-functorʳ n
-*-naturalʳ {m} {n} f = record
-  { at = λ _ → f ∙ id
-  ; isNatural = λ g x →
-    (f ∙ id) ((id {A = Fin m} ∙ g) x) ≈˘⟨ ∙-∘ f id id g x ⟩
-    (f ∘ id ∙ id ∘ g) x ≡⟨⟩
-    (f ∙ g) x ≡⟨⟩
-    (id ∘ f ∙ g ∘ id) x ≈⟨ ∙-∘ id g f id x ⟩
-    (id {A = Fin n} ∙ g) ((f ∙ id) x) ∎
-  }
-
-extract-naturalˡ : ∀ n → *-functorˡ n ⇉ Id
-extract-naturalˡ n = record
-  { at = λ m → proj₁ ∘ extract m
-  ; isNatural = λ {l m} f i →
-    proj₁ (extract m ((f ∙ id) i)) ≡⟨⟩
-    proj₁ (extract m (uncurry combine (Product.map f id (extract l i)))) ≈⟨ proj₁ =$= extract∘combine _ _ ⟩
-    proj₁ (Product.map f id (extract l i)) ≡⟨⟩
-    f (proj₁ (extract l i)) ∎
-  }
-
-extract-naturalʳ : ∀ m → *-functorʳ m ⇉ Id
-extract-naturalʳ m = record
-  { at = λ _ → proj₂ ∘ extract m
-  ; isNatural = λ f i → proj₂ =$= extract∘combine (proj₁ (extract m i)) _
-  }
-
--- swap∘swap : uncurry swap ∘₂ swap {n} ≗₂ _,_
--- swap∘swap {suc _} zero j = refl
--- swap∘swap (suc i) zero = refl
--- swap∘swap (suc i) (suc j) = Product.map suc suc =$= swap∘swap i j
-
--- swap∘punchOut : {i j : Fin (suc n)} .(i≢j : i ≢ j) →
---                 swap i (punchOut i≢j) ≡ (j , punchOut (i≢j ∘ sym))
--- swap∘punchOut {_} {zero} {zero} 0≢0 = ⊥-elim (0≢0 refl)
--- swap∘punchOut {suc _} {zero} {suc _} _ = refl
--- swap∘punchOut {suc _} {suc _} {zero} _ = refl
--- swap∘punchOut {suc _} {suc _} {suc _} si≢sj = Product.map suc suc =$= swap∘punchOut (si≢sj ∘ cong suc)
-
--- punchIn∘punchOut : {i j : Fin (suc n)} .(i≢j : i ≢ j) →
---                    punchIn i (punchOut i≢j) ≡ j
--- punchIn∘punchOut i≢j = proj₁ =$= swap∘punchOut i≢j
+-- extract-naturalʳ : ∀ m → *-functorʳ m ⇉ Id
+-- extract-naturalʳ m = record
+--   { at = λ _ → proj₂ ∘ extract m
+--   ; isNatural = λ f i → proj₂ =$= extract∘combine (proj₁ (extract m i)) _
+--   }
 
 punchIn-injective : ∀ i (j k : Fin n) → punchIn i j ≡ punchIn i k → j ≡ k
 punchIn-injective {suc _} zero _ _ sj≡sk = suc-injective sj≡sk

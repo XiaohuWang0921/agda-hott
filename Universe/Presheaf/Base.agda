@@ -3,9 +3,9 @@
 module Universe.Presheaf.Base where
 
 open import Level
-open import Category
-open import Universe.Set.Categorical as Set
-open import Universe.Setoid.Categorical as Setoid
+open import Category.Base
+open import Universe.Set.Categorical
+open import Universe.Setoid.Categorical
 open import Universe.Setoid
 open import Category.Functor
 open import Data.Fin.Base
@@ -18,7 +18,7 @@ open import Relation.Core
 -- on FinCat and there seem to be some weird performance issues
 -- in agda with Category.Functor.Opposite
 Presheaf : ∀ a r → Set (ℓsuc (a ⊔ r))
-Presheaf a r = Functor FinCat (Op (Setoid.category {a} {r}))
+Presheaf a r = Functor FinCat (Op (SetoidCat a r))
 
 infixr 0 _⇉_
 _⇉_ : ∀ {a r} → Rel (Presheaf a r) (a ⊔ r)
@@ -34,15 +34,18 @@ module Presheaf {a r} (P : Presheaf a r) where
   Space = P <$>_
 
   Tope : ℕ → Set a
-  Tope n = Setoid.Carrier (Space n)
+  Tope n = Carrier (Space n)
 
   _≃_ : ∀ {n} → Rel (Tope n) r
-  _≃_ {n} = Setoid._≈_ (Space n)
+  _≃_ {n} = _≈_ (Space n)
 
   map : ∀ {m n} → (Fin m → Fin n) → (Space n ⟶ Space m)
   map = P -$-_
 
-  map-cong : ∀ {m n} {f g : Fin m → Fin n} → f ≈ g → map f ≈ map g
+  module F = Category FinCat
+  module S = Category (SetoidCat a r)
+
+  map-cong : ∀ {m n} {f g : Fin m → Fin n} → f F.≈ g → map f S.≈ map g
   map-cong = P #$#_
 
   proj : ∀ {m n} → (Fin m → Fin n) → (Tope n → Tope m)
@@ -61,3 +64,5 @@ module Presheaf {a r} (P : Presheaf a r) where
 
   Path : Setoid a r
   Path = Space 2
+
+open Presheaf public

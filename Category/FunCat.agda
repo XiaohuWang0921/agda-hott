@@ -8,7 +8,7 @@ open import Category.Functor
 open import Category.Natural as Natural hiding (compose; id; _∘_)
 open import Universe.Setoid as Setoid hiding (id; compose; _∘_; _ˢ_)
 import Relation.Reasoning
-import Universe.Setoid.Categorical as SetoidCat
+open import Universe.Setoid.Categorical
 
 private
   variable
@@ -17,39 +17,38 @@ private
     D : Category p n s
     E : Category q o t
 
-category : Category o m r → Category p n s → Category _ _ _
-category C D = categoryCD
+FunCat : Category o m r → Category p n s → Category _ _ _
+FunCat C D = FunCatCD
   where
     module D = Category D
     open Category
 
-    categoryCD : Category _ _ _
-    categoryCD .Obj = Functor C D
-    categoryCD .[_,_] F G = F ⇛ G
-    categoryCD .compose = Natural.compose
-    categoryCD .id = Natural.id
-    categoryCD .assoc _ _ _ _ = D.assoc _ _ _
-    categoryCD .identityˡ _ _ = D.identityˡ _
-    categoryCD .identityʳ _ _ = D.identityʳ _
+    FunCatCD : Category _ _ _
+    FunCatCD .Obj = Functor C D
+    FunCatCD ._⊸_ F G = F ⇛ G
+    FunCatCD .compose = Natural.compose
+    FunCatCD .id = Natural.id
+    FunCatCD .assoc _ _ _ _ = D.assoc _ _ _
+    FunCatCD .identityˡ _ _ = D.identityˡ _
+    FunCatCD .identityʳ _ _ = D.identityʳ _
 
-Hom : (C : Category o m r) → Functor (Op C) (category C (SetoidCat.category m r))
-Hom C .obj X .obj Y = let open Category C in [ X , Y ]
+Hom : (C : Category o m r) → Functor (Op C) (FunCat C (SetoidCat m r))
+Hom C .obj X .obj Y = C [ X , Y ]
 Hom C .obj X .hom = Category.compose C
 Hom C .obj X .mor-∘ = Category.assoc C
 Hom C .obj X .mor-id = Category.identityˡ C
 Hom C .hom {X} {Y} .func f .at _ = λ→ Category.compose C - f
 Hom C .hom .func f .isNatural g h = Category.assoc C g h f
 Hom C .hom .cong f≈g _ h = Category.compose C ⟨$⟩ h ~$~ f≈g
-Hom C .mor-∘ {Z = Z} f g W h =
-  let module C = Category C in sym C.[ Z , W ] (C.assoc h g f)
+Hom C .mor-∘ {Z = Z} f g W h = sym (C [ Z , W ]) (Category.assoc C h g f)
 Hom C .mor-id _ = Category.identityʳ C
 
-Const : Functor C (category D C)
+Const : Functor C (FunCat D C)
 Const {C = C} = ConstC
   where
     module C = Category C
 
-    ConstC : Functor C (category D C)
+    ConstC : Functor C (FunCat D C)
     ConstC .obj X .obj _ = X
     ConstC .obj _ .hom = const ⟨$⟩ C.id
     ConstC .obj _ .mor-∘ _ _ = C.sym (C.identityˡ C.id)
@@ -60,7 +59,7 @@ Const {C = C} = ConstC
     ConstC .mor-∘ _ _ _ = C.refl
     ConstC .mor-id _ = C.refl
 
-Join : Functor (category C (category C D)) (category C D)
+Join : Functor (FunCat C (FunCat C D)) (FunCat C D)
 Join .obj F .obj X = F <$> X <$> X
 Join {D = D} .obj F .hom {X} {Y} =
   let module D = Category D
@@ -106,7 +105,7 @@ Join .hom .cong η≈ε X = η≈ε X X
 Join {D = D} .mor-∘ _ _ _ = Category.refl D
 Join {D = D} .mor-id _ = Category.refl D
 
-Compose : Functor (category D E) (category (category C D) (category C E))
+Compose : Functor (FunCat D E) (FunCat (FunCat C D) (FunCat C E))
 Compose .obj F .obj G = F ∘ G
 Compose .obj F .hom = postCompose F
 Compose .obj F .mor-∘ η ε X = F .mor-∘ (η <&> X) (ε <&> X)
@@ -118,13 +117,13 @@ Compose {E = E} .mor-∘ _ _ _ _ = Category.refl E
 Compose {E = E} .mor-id _ _ = Category.refl E
 
 infixr -1 Λ_-_
-Λ_-_ : Functor C (category D E) → Category.Obj D → Functor C E
+Λ_-_ : Functor C (FunCat D E) → Category.Obj D → Functor C E
 (Λ F - X) .obj Y = F <$> Y <$> X
 (Λ F - X) .hom = ta X Setoid.∘ F .hom
 (Λ F - X) .mor-∘ f g = F .mor-∘ f g X
 (Λ F - X) .mor-id = F .mor-id X
 
-Flip : Functor (category C (category D E)) (category D (category C E))
+Flip : Functor (FunCat C (FunCat D E)) (FunCat D (FunCat C E))
 Flip .obj F .obj X = Λ F - X
 Flip .obj F .hom .func f .at X = F <$> X -$- f
 Flip {E = E} .obj F .hom .func f .isNatural g = Category.sym E ((F -$- g) .isNatural f)
@@ -138,9 +137,9 @@ Flip .hom .cong η≈ε X Y = η≈ε Y X
 Flip {E = E} .mor-∘ _ _ _ _ = Category.refl E
 Flip {E = E} .mor-id _ _ = Category.refl E
 
-Ap : Functor (category C (category D E)) (category (category C D) (category C E))
+Ap : Functor (FunCat C (FunCat D E)) (FunCat (FunCat C D) (FunCat C E))
 Ap = (Compose <$> Join) ∘ Compose ∘ Flip
 
 infixl 8 _ˢ_
-_ˢ_ : Functor C (category D E) → Functor C D → Functor C E
+_ˢ_ : Functor C (FunCat D E) → Functor C D → Functor C E
 F ˢ G = Ap <$> F <$> G

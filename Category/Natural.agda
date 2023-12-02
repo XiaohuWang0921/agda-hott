@@ -45,7 +45,7 @@ _⇛_ {D = D} F G = F⇛G
     F⇛G .refl _ = D.refl
     F⇛G .trig ψ≈φ ψ≈χ X = D.trig (ψ≈φ X) (ψ≈χ X)
 
-ta : {F G : Functor C D} (open Category D) (X : Category.Obj C) → (F ⇛ G) ⟶ [ F <$> X , G <$> X ]
+ta : {F G : Functor C D} (X : Category.Obj C) → (F ⇛ G) ⟶ D [ F <$> X , G <$> X ]
 ta X .func η = η <&> X
 ta X .cong η≈ε = η≈ε X
 

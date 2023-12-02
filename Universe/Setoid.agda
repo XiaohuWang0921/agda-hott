@@ -6,7 +6,7 @@ open import Level
 open import Universe.Setoid.Base public
 open import Universe.Set as Set using ()
 import Relation.Reasoning
-open import Relation.Equality.Base as Eq using (_≡_)
+open import Relation.Equality.Base as Eq using (_≡_; _=$=_)
 open import Data.Unit.Core
 
 infixr 0 _⟶_
@@ -41,6 +41,14 @@ Trivial A .Carrier = A
 Trivial A ._≈_ _ _ = ⊤
 Trivial A .refl = tt
 Trivial A .trig _ _ = tt
+
+mapEq : ∀ {a b} {A : Set a} {B : Set b} → (A → B) → Eq A ⟶ Eq B
+mapEq f .func = f
+mapEq f .cong = f =$=_
+
+mapTrivial : ∀ {a b} {A : Set a} {B : Set b} → (A → B) → Trivial A ⟶ Trivial B
+mapTrivial f .func = f
+mapTrivial _ .cong _ = tt
 
 infixr 0 _⇒_
 _⇒_ : ∀ {a b r s} (A : Setoid a r) (B : Setoid b s) → Setoid (a ⊔ b ⊔ r ⊔ s) (a ⊔ s)
