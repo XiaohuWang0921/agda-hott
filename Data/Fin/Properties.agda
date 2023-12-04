@@ -39,9 +39,6 @@ join∘splitAt (suc m) (suc i) with splitAt m i in eq
   suc (join (inj₁ j)) ≡˘⟨ suc =$= join =$= eq ⟩
   suc (join (splitAt m i)) ≡⟨ suc =$= join∘splitAt m i ⟩
   suc i ∎
---    where
---      open Relation.Reasoning (_≡_ {A = Fin _})
---      open Equiv refl trig
 ... | inj₂ j =
   join (Sum.map suc id (inj₂ j)) ≡⟨⟩
   join (inj₂ j) ≡⟨⟩
@@ -50,9 +47,6 @@ join∘splitAt (suc m) (suc i) with splitAt m i in eq
   suc (join (inj₂ j)) ≡˘⟨ suc =$= join =$= eq ⟩
   suc (join (splitAt m i)) ≡⟨ suc =$= join∘splitAt m i ⟩
   suc i ∎
---   where
---     open Relation.Reasoning (_≡_ {A = Fin _})
---     open Equiv refl trig
 
 splitAt∘join : ∀ {m n} → splitAt m {n} ∘ join ≗ id
 splitAt∘join (inj₁ i) = splitAt∘inj+ _ i
@@ -67,9 +61,6 @@ combine∘extract (suc m) {n} i with splitAt n i in eq
   join (inj₁ j) ≡˘⟨ join =$= eq ⟩
   join (splitAt n i) ≡⟨ join∘splitAt n i ⟩
   i ∎
---   where
---     open Relation.Reasoning (_≡_ {A = Fin _})
---     open Equiv refl trig
 ... | inj₂ j with extract m j in eq'
 ... | h , l =
   uncurry combine (Product.map suc id (h , l)) ≡⟨⟩
@@ -82,9 +73,6 @@ combine∘extract (suc m) {n} i with splitAt n i in eq
   join (inj₂ j) ≡˘⟨ join =$= eq ⟩
   join (splitAt n i) ≡⟨ join∘splitAt n i ⟩
   i ∎
---   where
---     open Relation.Reasoning (_≡_ {A = Fin _})
---     open Equiv refl trig
 
 extract∘combine : ∀ {m n} → extract m {n} ∘₂ combine ≗₂ _,_
 extract∘combine {suc m} {n} zero j =
@@ -93,9 +81,6 @@ extract∘combine {suc m} {n} zero j =
   < zero ,_ ⊹ (λ k → Product.map suc id (extract m k)) > (splitAt n (inj+ _ j)) ≡⟨ < _ ⊹ _ > =$= splitAt∘inj+ (m * n) j ⟩
   < zero ,_ ⊹ (λ k → Product.map suc id (extract m k)) > (inj₁ j) ≡⟨⟩
   zero , j ∎
---   where
---     open Relation.Reasoning (_≡_ {A = Fin (suc m) × Fin n})
---     open Equiv refl trig
 extract∘combine {suc m} {n} (suc i) j =
   extract _ (combine (suc i) j) ≡⟨⟩
   extract _ (n ℕ+ combine i j) ≡⟨⟩
@@ -104,9 +89,6 @@ extract∘combine {suc m} {n} (suc i) j =
   Product.map suc id (extract m (combine i j)) ≡⟨ Product.map suc id =$= extract∘combine i j ⟩
   Product.map suc id (i , j) ≡⟨⟩
   suc i , j ∎
-  -- where                         
-  --   open Relation.Reasoning (_≡_ {A = Fin (suc m) × Fin n})
-  --   open Equiv refl trig
 
 private
   variable
@@ -198,22 +180,19 @@ suc-injective refl = refl
 +-functor .mor-∘ f g _ = ∣-∘ f id g id
 +-functor .mor-id {m} _ = ∣-id {m = m}
 
--- inj+-natural : ∀ n → Id ⇉ +-functorˡ n
--- inj+-natural n = record
---   { at = λ _ → inj+ n
---   ; isNatural = λ f i →
---     inj+ n (f i) ≡⟨⟩
---     join (inj₁ (f i)) ≡⟨⟩
---     join (Sum.map f id (inj₁ i)) ≈˘⟨ join =$= Sum.map f id =$= splitAt∘inj+ n i ⟩
---     join (Sum.map f id (splitAt _ (inj+ n i))) ≡⟨⟩
---     (f ∣ id) (inj+ n i) ∎
---   }
++-functorʳ : ℕ → Functor FinCat FinCat
++-functorʳ = +-functor <$>_
 
--- ℕ+-natural : ∀ m → Id ⇉ +-functorʳ m
--- ℕ+-natural m = record
---   { at = λ _ → m ℕ+_
---   ; isNatural = λ f i → join =$= Sum.map id f =$= sym (splitAt∘ℕ+ m i)
---   }
++-functorˡ : ℕ → Functor FinCat FinCat
++-functorˡ = Λ +-functor -_
+
+inj+-natural : ∀ n → Id ⇉ +-functorˡ n
+inj+-natural n .at _ = inj+ n
+inj+-natural n .isNatural f i = join =$= Sum.map f id =$= sym (splitAt∘inj+ n i)
+
+ℕ+-natural : ∀ m → Id ⇉ +-functorʳ m
+ℕ+-natural m .at _ = m ℕ+_
+ℕ+-natural m .isNatural f i = join =$= Sum.map id f =$= sym (splitAt∘ℕ+ m i)
 
 *-functor : Functor FinCat (FunCat FinCat FinCat)
 *-functor .obj m .obj n = m * n
@@ -232,21 +211,19 @@ suc-injective refl = refl
 *-functor .mor-∘ f g _ = ∙-∘ f id g id
 *-functor .mor-id {m} _ = ∙-id {m = m}
 
--- extract-naturalˡ : ∀ n → *-functorˡ n ⇉ Id
--- extract-naturalˡ n = record
---   { at = λ m → proj₁ ∘ extract m
---   ; isNatural = λ {l m} f i →
---     proj₁ (extract m ((f ∙ id) i)) ≡⟨⟩
---     proj₁ (extract m (uncurry combine (Product.map f id (extract l i)))) ≈⟨ proj₁ =$= extract∘combine _ _ ⟩
---     proj₁ (Product.map f id (extract l i)) ≡⟨⟩
---     f (proj₁ (extract l i)) ∎
---   }
+*-functorʳ : ℕ → Functor FinCat FinCat
+*-functorʳ = *-functor <$>_
 
--- extract-naturalʳ : ∀ m → *-functorʳ m ⇉ Id
--- extract-naturalʳ m = record
---   { at = λ _ → proj₂ ∘ extract m
---   ; isNatural = λ f i → proj₂ =$= extract∘combine (proj₁ (extract m i)) _
---   }
+*-functorˡ : ℕ → Functor FinCat FinCat
+*-functorˡ = Λ *-functor -_
+
+extract-naturalˡ : ∀ n → *-functorˡ n ⇉ Id
+extract-naturalˡ _ .at m = proj₁ ∘ extract m
+extract-naturalˡ _ .isNatural _ _ = proj₁ =$= extract∘combine _ _
+
+extract-naturalʳ : ∀ n → *-functorʳ n ⇉ Id
+extract-naturalʳ m .at _ = proj₂ ∘ extract m
+extract-naturalʳ m .isNatural _ i = proj₂ =$= extract∘combine (proj₁ (extract m i)) _
 
 punchIn-injective : ∀ i (j k : Fin n) → punchIn i j ≡ punchIn i k → j ≡ k
 punchIn-injective {suc _} zero _ _ sj≡sk = suc-injective sj≡sk

@@ -75,3 +75,17 @@ map-id = refl
 ×-functor .hom .cong f≈g _ = map-congˡ f≈g
 ×-functor .mor-∘ _ _ _ _ = refl
 ×-functor .mor-id _ _ = refl
+
+×-functorʳ : ∀ {a} b → Set a → Functor (SetCat b) (SetCat (a ⊔ b))
+×-functorʳ _ = ×-functor <$>_
+
+×-functorˡ : ∀ a {b} → Set b → Functor (SetCat a) (SetCat (a ⊔ b))
+×-functorˡ _ = Λ ×-functor -_
+
+proj₁-natural : ∀ a {b} (B : Set b) → ×-functorˡ a B ⇉ LiftFunctor b
+proj₁-natural _ _ .at _ = lift ∘ proj₁
+proj₁-natural _ _ .isNatural _ _ = refl
+
+proj₂-natural : ∀ {a} b (A : Set a) → ×-functorʳ b A ⇉ LiftFunctor a
+proj₂-natural _ _ .at _ = lift ∘ proj₂
+proj₂-natural _ _ .isNatural _ _ = refl

@@ -71,3 +71,17 @@ map-id (inj₂ _) = refl
 ⊎-functor .hom .cong f≈g _ = map-congˡ f≈g
 ⊎-functor .mor-∘ f g _ = map-∘ f g id id
 ⊎-functor .mor-id _ = map-id
+
+⊎-functorʳ : ∀ {a} b → Set a → Functor (SetCat b) (SetCat (a ⊔ b))
+⊎-functorʳ _ = ⊎-functor <$>_
+
+⊎-functorˡ : ∀ a {b} → Set b → Functor (SetCat a) (SetCat (a ⊔ b))
+⊎-functorˡ _ = Λ ⊎-functor -_
+
+inj₁-natural : ∀ a {b} (B : Set b) → LiftFunctor b ⇉ ⊎-functorˡ a B
+inj₁-natural _ _ .at _ = inj₁ ∘ lower
+inj₁-natural _ _ .isNatural _ _ = refl
+
+inj₂-natural : ∀ {a} b (A : Set a) → LiftFunctor a ⇉ ⊎-functorʳ b A
+inj₂-natural _ _ .at _ = inj₂ ∘ lower
+inj₂-natural _ _ .isNatural _ _ = refl
