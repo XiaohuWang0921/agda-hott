@@ -14,17 +14,17 @@ private
 
 infixr 6 _ℕ+_
 _ℕ+_ : ℕ → Presheaf a r → Presheaf a r
-n ℕ+ P = P ∘ +-functorˡ n
+n ℕ+ P = P ∘ Opposite (+-functorˡ n)
 
 infixl 6 _+ℕ_
 _+ℕ_ : Presheaf a r → ℕ → Presheaf a r
-P +ℕ n = P ∘ +-functorʳ n
+P +ℕ n = P ∘ Opposite (+-functorʳ n)
 
 infixr 7 _ℕ*_
 _ℕ*_ : ℕ → Presheaf a r → Presheaf a r
-n ℕ* P = P ∘ *-functorˡ n
+n ℕ* P = P ∘ Opposite (*-functorˡ n)
 
 infixl 6 _*ℕ_
 _*ℕ_ : Presheaf a r → ℕ → Presheaf a r
-P *ℕ n = P ∘ *-functorʳ n
+P *ℕ n = P ∘ Opposite (*-functorʳ n)
 

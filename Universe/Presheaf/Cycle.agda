@@ -38,9 +38,9 @@ mapCyc : ∀ {a r} {P Q : Presheaf a r} n →
         (P ⇛ Q) ⟶ CycStd P n ⇒ CycStd Q n
 mapCyc n .func η .func c .face i = (η <&> suc n) ⟨$⟩ c .face i
 mapCyc {a} {r} {P} {Q} n .func η .func c .compatible i j =
-  (Q -$- punchIn i) ⟨$⟩ ((η <&> suc n) ⟨$⟩ face c j) ≈⟨ η .isNatural _ _ ⟩
+  (Q -$- punchIn i) ⟨$⟩ ((η <&> suc n) ⟨$⟩ face c j) ≈˘⟨ η .isNatural _ _ ⟩
   (η <&> n) ⟨$⟩ ((P -$- punchIn i) ⟨$⟩ face c j) ≈⟨ (η <&> n) ~$~ c .compatible i j ⟩
-  (η <&> n) ⟨$⟩ ((P -$- punchIn (pinch i j)) ⟨$⟩ face c (punchIn j i)) ≈˘⟨ η .isNatural _ _ ⟩
+  (η <&> n) ⟨$⟩ ((P -$- punchIn (pinch i j)) ⟨$⟩ face c (punchIn j i)) ≈⟨ η .isNatural _ _ ⟩
   (Q -$- punchIn (pinch i j)) ⟨$⟩ ((η <&> suc n) ⟨$⟩ face c (punchIn j i)) ∎
   where open Relation.Reasoning (_≃_ Q)
         open Equiv (Space Q n .refl) (Space Q n .trig)

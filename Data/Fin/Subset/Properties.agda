@@ -7,7 +7,7 @@ open import Data.Fin.Subset.Base
 open import Data.Fin.Properties
 open import Data.Nat.Base as ℕ using (ℕ; zero; suc; 0≤n; s≤s)
 open import Universe.Set
-open import Relation.Equality.Base
+open import Relation.Equality.Base hiding (cong)
 open import Data.Unit.Core
 open import Data.Bool.Base hiding (_≟_)
 open import Data.Vec.Base
@@ -17,6 +17,9 @@ open import Category.Base
 open import Level
 open import Category.Functor hiding (_∘_)
 open import Data.Vec.Properties
+open import Universe.Setoid using (func; cong)
+open import Category.FunCat
+open import Category.Natural using (at; isNatural)
 
 private
   variable
@@ -52,10 +55,10 @@ tail-⊆ s⊆t i = s⊆t (suc i)
 ≗⇒⊆ s≗t i rewrite s≗t i = ≤-refl
 
 ⊆-full : {s : Subset n} → s ⊆ full n
-⊆-full i = ≤-true
+⊆-full i = b≤true
 
 empty-⊆ : {s : Subset n} → empty n ⊆ s
-empty-⊆ i = false-≤
+empty-⊆ i = false≤b
 
 ∣∣-cong : {s t : Subset n} → s ≗ t → ∣ s ∣ ≡ ∣ t ∣
 ∣∣-cong {zero} _ = refl
@@ -92,7 +95,7 @@ empty-⊆ i = false-≤
 ∪-⊆ s⊆t u⊆v i = ∨-≤ (s⊆t i) (u⊆v i)
 
 ∪-empty : (s : Subset n) → s ∪ empty n ≗ s
-∪-empty s i = ∨-false (s i)
+∪-empty _ _ = ∨-false
 
 image-cong : ∀ {f g : Fin m → Fin n} {s t} → f ≗ g → s ≗ t → image f s ≗ image g t
 image-cong {zero} f≗g s≗t i = refl
@@ -114,67 +117,54 @@ image-singleton f (suc i) = image-singleton (f ∘ suc) i
 ⊆-Cat n = Preorder (_⊆_ {n}) ⊆-refl ⊆-trans
 
 ∣∣-functor : Functor (⊆-Cat n) ℕₚ.≤-Cat
-∣∣-functor = record
-  { obj = ∣_∣
-  ; hom = record
-    { func = ∣∣-⊆
-    ; cong = λ _ → tt
-    }
-  ; mor-∘ = λ _ _ → tt
-  ; mor-id = tt
-  }
+∣∣-functor .obj = ∣_∣
+∣∣-functor .hom .func = ∣∣-⊆
+∣∣-functor .hom .cong _ = tt
+∣∣-functor .mor-∘ _ _ = tt
+∣∣-functor .mor-id = tt
 
-⊆?-functorˡ : Subset n → Functor (⊆-Cat n) (Op Boolₚ.≤-Cat)
-⊆?-functorˡ s = record
-  { obj = _⊆? s
-  ; hom = record
-    { func = flip ⊆?-⊆ ⊆-refl
-    ; cong = λ _ → tt
-    }
-  ; mor-∘ = λ _ _ → tt
-  ; mor-id = tt
-  }
+⊆?-functor : Functor (Op (⊆-Cat n)) (FunCat (⊆-Cat n) Boolₚ.≤-Cat)
+⊆?-functor .obj s .obj = s ⊆?_
+⊆?-functor .obj s .hom .func = ⊆?-⊆ ⊆-refl
+⊆?-functor .obj s .hom .cong _ = tt
+⊆?-functor .obj s .mor-∘ _ _ = tt
+⊆?-functor .obj s .mor-id = tt
+⊆?-functor .hom .func s⊆t .at _ = ⊆?-⊆ s⊆t ⊆-refl
+⊆?-functor .hom .func _ .isNatural _ = tt
+⊆?-functor .hom .cong _ _ = tt
+⊆?-functor .mor-∘ _ _ _ = tt
+⊆?-functor .mor-id _ = tt
 
-⊆?-functorʳ : Subset n → Functor (⊆-Cat n) (Boolₚ.≤-Cat)
-⊆?-functorʳ s = record
-  { obj = s ⊆?_
-  ; hom = record
-    { func = ⊆?-⊆ ⊆-refl
-    ; cong = λ _ → tt
-    }
-  ; mor-∘ = λ _ _ → tt
-  ; mor-id = tt
-  }
+⊆?-functorʳ : Subset n → Functor (⊆-Cat n) Boolₚ.≤-Cat
+⊆?-functorʳ = ⊆?-functor <$>_
 
-∪-functorˡ : Subset n → Functor (⊆-Cat n) (⊆-Cat n)
-∪-functorˡ s = record
-  { obj = _∪ s
-  ; hom = record
-    { func = flip ∪-⊆ ⊆-refl
-    ; cong = λ _ → tt
-    }
-  ; mor-∘ = λ _ _ → tt
-  ; mor-id = tt
-  }
+⊆?-functorˡ : Subset n → Functor (Op (⊆-Cat n)) Boolₚ.≤-Cat
+⊆?-functorˡ = Λ ⊆?-functor -_
+-- ∪-functorˡ : Subset n → Functor (⊆-Cat n) (⊆-Cat n)
+-- ∪-functorˡ s = record
+--   { obj = _∪ s
+--   ; hom = record
+--     { func = flip ∪-⊆ ⊆-refl
+--     ; cong = λ _ → tt
+--     }
+--   ; mor-∘ = λ _ _ → tt
+--   ; mor-id = tt
+--   }
 
-∪-functorʳ : Subset n → Functor (⊆-Cat n) (⊆-Cat n)
-∪-functorʳ s = record
-  { obj = s ∪_
-  ; hom = record
-    { func = ∪-⊆ ⊆-refl
-    ; cong = λ _ → tt
-    }
-  ; mor-∘ = λ _ _ → tt
-  ; mor-id = tt
-  }
+-- ∪-functorʳ : Subset n → Functor (⊆-Cat n) (⊆-Cat n)
+-- ∪-functorʳ s = record
+--   { obj = s ∪_
+--   ; hom = record
+--     { func = ∪-⊆ ⊆-refl
+--     ; cong = λ _ → tt
+--     }
+--   ; mor-∘ = λ _ _ → tt
+--   ; mor-id = tt
+--   }
 
 image-functor : (Fin m → Fin n) → Functor (⊆-Cat m) (⊆-Cat n)
-image-functor f = record
-  { obj = image f
-  ; hom = record
-    { func = image-⊆ f
-    ; cong = λ _ → tt
-    }
-  ; mor-∘ = λ _ _  → tt
-  ; mor-id = tt
-  }
+image-functor f .obj = image f
+image-functor f .hom .func = image-⊆ f
+image-functor f .hom .cong _ = tt
+image-functor f .mor-∘ _ _ = tt
+image-functor f .mor-id = tt

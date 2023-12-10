@@ -3,7 +3,7 @@
 module Data.Bool.Properties where
 
 open import Data.Bool.Base
-open import Relation.Equality.Base
+open import Relation.Equality.Base hiding (cong)
 open import Universe.Set
 open import Data.Empty.Base
 open import Data.Unit.Core
@@ -11,6 +11,13 @@ open import Category.Base
 open import Category.Functor hiding (_∘_)
 open import Universe.Set.Categorical
 open import Level
+open import Universe.Setoid using (func; cong)
+open import Category.FunCat
+open import Category.Natural hiding (id; _∘_)
+
+private
+  variable
+    a b c d : Bool
 
 false≢true : false ≢ true
 false≢true ()
@@ -38,120 +45,156 @@ Reflects-false : ∀ {ℓ} {P : Set ℓ} b → b Reflects P → (P → ⊥) → 
 Reflects-false false _ _ = refl
 Reflects-false true p ¬p = ⊥-elim (¬p p)
 
-≤-true : ∀ {b} → b ≤ true
-≤-true {false} = f≤t
-≤-true {true} = b≤b
+b≤true : b ≤ true
+b≤true {false} = f≤t
+b≤true {true} = b≤b
 
-false-≤ : ∀ {b} → false ≤ b
-false-≤ {false} = b≤b
-false-≤ {true} = f≤t
+false≤b : false ≤ b
+false≤b {false} = b≤b
+false≤b {true} = f≤t
 
-not-≤ : ∀ {a b} → a ≤ b → not b ≤ not a
+not-≤ : a ≤ b → not b ≤ not a
 not-≤ b≤b = b≤b
 not-≤ f≤t = f≤t
 
-T-≤ : ∀ {a b} → .(a ≤ b) → T a → T b
+T-≤ : a ≤ b → T a → T b
 T-≤ {true} {true} _ _ = tt
 
-≤?-≤ : ∀ {a b c d} → a ≤ b → c ≤ d → (b ≤? c) ≤ (a ≤? d)
+≤?-≤ : a ≤ b → c ≤ d → (b ≤? c) ≤ (a ≤? d)
 ≤?-≤ {false} {false} _ = const b≤b
-≤?-≤ {false} {true} _ = const ≤-true
+≤?-≤ {false} {true} _ = const b≤true
 ≤?-≤ {true} {true} _ = id
 
-∧-≤ : ∀ {a b c d} → a ≤ b → c ≤ d → a ∧ c ≤ b ∧ d
+∧-≤ : a ≤ b → c ≤ d → a ∧ c ≤ b ∧ d
 ∧-≤ {false} {false} = const (const b≤b)
-∧-≤ {false} {true} = const (const false-≤)
+∧-≤ {false} {true} = const (const false≤b)
 ∧-≤ {true} {true} = const id
 
-∨-≤ : ∀ {a b c d} → a ≤ b → c ≤ d → a ∨ c ≤ b ∨ d
+a∧b≤a : a ∧ b ≤ a
+a∧b≤a {false} = b≤b
+a∧b≤a {true} = b≤true
+
+a∧b≤b : a ∧ b ≤ b
+a∧b≤b {false} = false≤b
+a∧b≤b {true} = b≤b
+
+∨-≤ : a ≤ b → c ≤ d → a ∨ c ≤ b ∨ d
 ∨-≤ {false} {false} = const id
-∨-≤ {false} {true} = const (const ≤-true)
+∨-≤ {false} {true} = const (const b≤true)
 ∨-≤ {true} {true} = const (const b≤b)
 
-∨-false : ∀ b → b ∨ false ≡ b
-∨-false false = refl
-∨-false true = refl
+∨-false : b ∨ false ≡ b
+∨-false {false} = refl
+∨-false {true} = refl
 
-≤-refl : ∀ {b} → b ≤ b
+∨-true : b ∨ true ≡ true
+∨-true {false} = refl
+∨-true {true} = refl
+
+a≤a∨b : a ≤ a ∨ b
+a≤a∨b {false} = false≤b
+a≤a∨b {true} = b≤b
+
+b≤a∨b : ∀ {b} → b ≤ a ∨ b
+b≤a∨b {false} = b≤b
+b≤a∨b {true} = b≤true
+
+≤-refl : b ≤ b
 ≤-refl = b≤b
 
-≡⇒≤ : ∀ {a b} → a ≡ b → a ≤ b
+≡⇒≤ : a ≡ b → a ≤ b
 ≡⇒≤ refl = ≤-refl
 
-≤-antisym : ∀ {a b} → a ≤ b → b ≤ a → a ≡ b
+≤-antisym : a ≤ b → b ≤ a → a ≡ b
 ≤-antisym b≤b _ = refl
 
-≤-trans : ∀ {a b c} → a ≤ b → b ≤ c → a ≤ c
+≤-trans : a ≤ b → b ≤ c → a ≤ c
 ≤-trans b≤b a≤c = a≤c
 ≤-trans f≤t b≤b = f≤t
 
 ≤-Cat : Category 0ℓ 0ℓ 0ℓ
 ≤-Cat = Preorder _≤_ ≤-refl ≤-trans
 
-T-functor : Functor ≤-Cat (category {0ℓ})
-T-functor = record
-  { obj = T
-  ; hom = record
-    { func = λ a≤b → T-≤ a≤b
-    ; cong = λ _ _ → refl
-    }
-  ; mor-∘ = λ where
-    {true} {true} {true} _ _ _ → refl
-  ; mor-id = λ where
-    {true} tt → refl
-  }
+T-functor : Functor ≤-Cat (SetCat 0ℓ)
+T-functor .obj = T
+T-functor .hom .func = T-≤
+T-functor .hom {true} {true} .cong _ _ = refl
+T-functor .mor-∘ {true} {true} {true} _ _ _ = refl
+T-functor .mor-id {true} tt = refl
 
 not-functor : Functor ≤-Cat (Op ≤-Cat)
-not-functor = record
-  { obj = not
-  ; hom = record
-    { func = not-≤
-    ; cong = λ _ → tt
-    }
-  ; mor-∘ = λ f g → tt
-  ; mor-id = tt
-  }
+not-functor .obj = not
+not-functor .hom .func = not-≤
+not-functor .hom .cong _ = tt
+not-functor .mor-∘ _ _ = tt
+not-functor .mor-id = tt
 
-≤?-functorˡ : Bool → Functor ≤-Cat (Op ≤-Cat)
-≤?-functorˡ b = record
-  { obj = _≤? b
-  ; hom = record
-    { func = flip ≤?-≤ ≤-refl
-    ; cong = λ _ → tt
-    }
-  ; mor-∘ = λ _ _ → tt
-  ; mor-id = tt
-  }
+≤?-functor : Functor (Op ≤-Cat) (FunCat ≤-Cat ≤-Cat)
+≤?-functor .obj a .obj = a ≤?_
+≤?-functor .obj a .hom .func = ≤?-≤ ≤-refl
+≤?-functor .obj a .hom .cong _ = tt
+≤?-functor .obj a .mor-∘ _ _ = tt
+≤?-functor .obj a .mor-id = tt
+≤?-functor .hom .func a≤b .at _ = ≤?-≤ a≤b ≤-refl
+≤?-functor .hom .func _ .isNatural _ = tt
+≤?-functor .hom .cong _ _ = tt
+≤?-functor .mor-∘ _ _ _ = tt
+≤?-functor .mor-id _ = tt
 
 ≤?-functorʳ : Bool → Functor ≤-Cat ≤-Cat
-≤?-functorʳ b = record
-  { obj = b ≤?_
-  ; hom = record
-    { func = ≤?-≤ ≤-refl
-    ; cong = λ _ → tt
-    }
-  ; mor-∘ = λ _ _ → tt
-  ; mor-id = tt
-  }
+≤?-functorʳ = ≤?-functor <$>_
 
-∧-functorˡ : Bool → Functor ≤-Cat ≤-Cat
-∧-functorˡ b = record
-  { obj = _∧ b
-  ; hom = record
-    { func = flip ∧-≤ ≤-refl
-    ; cong = λ _ → tt
-    }
-  ; mor-∘ = λ _ _ → tt
-  ; mor-id = tt
-  }
+≤?-functorˡ : Bool → Functor (Op ≤-Cat) ≤-Cat
+≤?-functorˡ = Λ ≤?-functor -_
+
+∧-functor : Functor ≤-Cat (FunCat ≤-Cat ≤-Cat)
+∧-functor .obj a .obj = a ∧_
+∧-functor .obj a .hom .func = ∧-≤ ≤-refl
+∧-functor .obj a .hom .cong _ = tt
+∧-functor .obj a .mor-∘ _ _ = tt
+∧-functor .obj a .mor-id = tt
+∧-functor .hom .func a≤b .at _ = ∧-≤ a≤b ≤-refl
+∧-functor .hom .func _ .isNatural _ = tt
+∧-functor .hom .cong _ _ = tt
+∧-functor .mor-∘ _ _ _ = tt
+∧-functor .mor-id _ = tt
 
 ∧-functorʳ : Bool → Functor ≤-Cat ≤-Cat
-∧-functorʳ b = record
-  { obj = b ∧_
-  ; hom = record
-    { func = ∧-≤ ≤-refl
-    ; cong = λ _ → tt
-    }
-  ; mor-∘ = λ _ _ → tt
-  ; mor-id = tt
-  }
+∧-functorʳ = ∧-functor <$>_
+
+∧-functorˡ : Bool → Functor ≤-Cat ≤-Cat
+∧-functorˡ = Λ ∧-functor -_
+
+∧-naturalʳ : ∀ b → ∧-functorʳ b ⇉ Id
+∧-naturalʳ b .at _ = a∧b≤b
+∧-naturalʳ b .isNatural _ = tt
+
+∧-naturalˡ : ∀ b → ∧-functorˡ b ⇉ Id
+∧-naturalˡ b .at _ = a∧b≤a
+∧-naturalˡ b .isNatural _ = tt
+
+∨-functor : Functor ≤-Cat (FunCat ≤-Cat ≤-Cat)
+∨-functor .obj a .obj = a ∨_
+∨-functor .obj a .hom .func = ∨-≤ ≤-refl
+∨-functor .obj a .hom .cong _ = tt
+∨-functor .obj a .mor-∘ _ _ = tt
+∨-functor .obj a .mor-id = tt
+∨-functor .hom .func a≤b .at _ = ∨-≤ a≤b ≤-refl
+∨-functor .hom .func _ .isNatural _ = tt
+∨-functor .hom .cong _ _ = tt
+∨-functor .mor-∘ _ _ _ = tt
+∨-functor .mor-id _ = tt
+
+∨-functorʳ : Bool → Functor ≤-Cat ≤-Cat
+∨-functorʳ = ∨-functor <$>_
+
+∨-functorˡ : Bool → Functor ≤-Cat ≤-Cat
+∨-functorˡ = Λ ∨-functor -_
+
+∨-naturalʳ : ∀ b → Id ⇉ ∨-functorʳ b
+∨-naturalʳ b .at _ = b≤a∨b
+∨-naturalʳ b .isNatural _ = tt
+
+∨-naturalˡ : ∀ b → Id ⇉ ∨-functorˡ b
+∨-naturalˡ b .at _ = a≤a∨b
+∨-naturalˡ b .isNatural _ = tt

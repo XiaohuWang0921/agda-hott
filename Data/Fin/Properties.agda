@@ -164,7 +164,7 @@ suc-injective refl = refl
 ∙-id {m} = combine∘extract m
 
 +-functor : Functor FinCat (FunCat FinCat FinCat)
-+-functor .obj m .obj n = m + n
++-functor .obj m .obj = m +_
 +-functor .obj _ .hom .func = id ∣_
 +-functor .obj _ .hom .cong = ∣-congʳ
 +-functor .obj _ .mor-∘ f g = ∣-∘ id f id g
@@ -195,7 +195,7 @@ inj+-natural n .isNatural f i = join =$= Sum.map f id =$= sym (splitAt∘inj+ n 
 ℕ+-natural m .isNatural f i = join =$= Sum.map id f =$= sym (splitAt∘ℕ+ m i)
 
 *-functor : Functor FinCat (FunCat FinCat FinCat)
-*-functor .obj m .obj n = m * n
+*-functor .obj m .obj = m *_
 *-functor .obj m .hom .func = id {A = Fin m} ∙_
 *-functor .obj m .hom .cong = ∙-congʳ {k = m} {f = id}
 *-functor .obj m .mor-∘ f g = ∙-∘ {n = m} id f id g

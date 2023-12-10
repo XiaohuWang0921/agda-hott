@@ -4,14 +4,17 @@ module Data.Nat.Properties where
 
 open import Data.Nat.Base
 open import Data.Bool.Base as Bool hiding (_≟_; _≤?_; _≤_)
-open import Relation.Equality.Base
+open import Relation.Equality.Base hiding (cong)
 open import Universe.Set
 open import Data.Empty.Base
 open import Data.Unit.Core
-open import Data.Bool.Properties as Boolₚ using (≤-true; false-≤)
+open import Data.Bool.Properties as Boolₚ using (b≤true; false≤b)
 open import Category.Base
 open import Category.Functor hiding (_∘_)
 open import Level
+open import Universe.Setoid using (func; cong)
+open import Category.FunCat
+open import Category.Natural hiding (id; _∘_)
 
 zero≢suc : ∀ {n} → zero ≢ suc n
 zero≢suc ()
@@ -23,13 +26,13 @@ pred≤pred : ∀ {m n} → suc m ≤ suc n → m ≤ n
 pred≤pred (s≤s m≤n) = m≤n
 
 ≤?-≤ : ∀ {k l m n} → k ≤ l → m ≤ n → (l ≤? m) Bool.≤ (k ≤? n)
-≤?-≤ 0≤n _ = ≤-true
-≤?-≤ (s≤s k≤l) 0≤n = false-≤
+≤?-≤ 0≤n _ = b≤true
+≤?-≤ (s≤s k≤l) 0≤n = false≤b
 ≤?-≤ (s≤s k≤l) (s≤s m≤n) = ≤?-≤ k≤l m≤n
 
 <?-≤ : ∀ {k l m n} → k ≤ l → m ≤ n → (l <? m) Bool.≤ (k <? n)
-<?-≤ _ 0≤n = false-≤
-<?-≤ 0≤n (s≤s m≤n) = ≤-true
+<?-≤ _ 0≤n = false≤b
+<?-≤ 0≤n (s≤s m≤n) = b≤true
 <?-≤ (s≤s k≤l) (s≤s m≤n) = <?-≤ k≤l m≤n
 
 <?-Reflects-< : ∀ m n → (m <? n) Reflects (m < n)
@@ -76,56 +79,44 @@ pred≤pred (s≤s m≤n) = m≤n
 ≤-Cat = Preorder _≤_ ≤-refl ≤-trans
 
 suc-functor : Functor ≤-Cat ≤-Cat
-suc-functor = record
-  { obj = suc
-  ; hom = record
-    { func = s≤s
-    ; cong = λ _ → tt
-    }
-  ; mor-∘ = λ _ _ → tt
-  ; mor-id = tt
-  }
+suc-functor .obj = suc
+suc-functor .hom .func = s≤s
+suc-functor .hom .cong _ = tt
+suc-functor .mor-∘ _ _ = tt
+suc-functor .mor-id = tt
 
-≤?-functorˡ : ℕ → Functor ≤-Cat (Op Boolₚ.≤-Cat)
-≤?-functorˡ n = record
-  { obj = _≤? n
-  ; hom = record
-    { func = flip ≤?-≤ ≤-refl
-    ; cong = λ _ → tt
-    }
-  ; mor-∘ = λ _ _ → tt
-  ; mor-id = tt
-  }
+≤?-functor : Functor (Op ≤-Cat) (FunCat ≤-Cat Boolₚ.≤-Cat)
+≤?-functor .obj m .obj = m ≤?_
+≤?-functor .obj m .hom .func = ≤?-≤ {m} ≤-refl
+≤?-functor .obj _ .hom .cong _ = tt
+≤?-functor .obj _ .mor-∘ _ _ = tt
+≤?-functor .obj _ .mor-id = tt
+≤?-functor .hom .func m≤n .at _ = ≤?-≤ m≤n ≤-refl
+≤?-functor .hom .func m≤n .isNatural _ = tt
+≤?-functor .hom .cong _ _ = tt
+≤?-functor .mor-∘ _ _ _ = tt
+≤?-functor .mor-id _ = tt
 
 ≤?-functorʳ : ℕ → Functor ≤-Cat Boolₚ.≤-Cat
-≤?-functorʳ n = record
-  { obj = n ≤?_
-  ; hom = record
-    { func = ≤?-≤ {n} ≤-refl
-    ; cong = λ _ → tt
-    }
-  ; mor-∘ = λ _ _ → tt
-  ; mor-id = tt
-  }
+≤?-functorʳ = ≤?-functor <$>_
 
-<?-functorˡ : ℕ → Functor ≤-Cat (Op Boolₚ.≤-Cat)
-<?-functorˡ n = record
-  { obj = _<? n
-  ; hom = record
-    { func = flip (<?-≤ {m = n}) ≤-refl
-    ; cong = λ _ → tt
-    }
-  ; mor-∘ = λ _ _ → tt
-  ; mor-id = tt
-  }
+≤?-functorˡ : ℕ → Functor (Op ≤-Cat) Boolₚ.≤-Cat
+≤?-functorˡ = Λ ≤?-functor -_
+
+<?-functor : Functor (Op ≤-Cat) (FunCat ≤-Cat Boolₚ.≤-Cat)
+<?-functor .obj m .obj = m <?_
+<?-functor .obj m .hom .func = <?-≤ {m} ≤-refl
+<?-functor .obj _ .hom .cong _ = tt
+<?-functor .obj _ .mor-∘ _ _ = tt
+<?-functor .obj _ .mor-id = tt
+<?-functor .hom .func m≤n .at n = <?-≤ {m = n} m≤n ≤-refl
+<?-functor .hom .func m≤n .isNatural _ = tt
+<?-functor .hom .cong _ _ = tt
+<?-functor .mor-∘ _ _ _ = tt
+<?-functor .mor-id _ = tt
 
 <?-functorʳ : ℕ → Functor ≤-Cat Boolₚ.≤-Cat
-<?-functorʳ n = record
-  { obj = n <?_
-  ; hom = record
-    { func = <?-≤ ≤-refl
-    ; cong = λ _ → tt
-    }
-  ; mor-∘ = λ _ _ → tt
-  ; mor-id = tt
-  }
+<?-functorʳ = <?-functor <$>_
+
+<?-functorˡ : ℕ → Functor (Op ≤-Cat) Boolₚ.≤-Cat
+<?-functorˡ = Λ <?-functor -_

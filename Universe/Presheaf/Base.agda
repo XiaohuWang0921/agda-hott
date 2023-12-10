@@ -10,7 +10,7 @@ open import Universe.Setoid
 open import Category.Functor
 open import Data.Fin.Base
 open import Data.Nat.Base
-open import Category.Natural renaming (_⇉_ to _⇇_; _⇛_ to _⇚_) public
+open import Category.Natural public
 open import Relation.Core
 
 -- I have decided to take the opposite category of setoids
@@ -18,15 +18,15 @@ open import Relation.Core
 -- on FinCat and there seem to be some weird performance issues
 -- in agda with Category.Functor.Opposite
 Presheaf : ∀ a r → Set (ℓsuc (a ⊔ r))
-Presheaf a r = Functor FinCat (Op (SetoidCat a r))
+Presheaf a r = Functor (Op FinCat) (SetoidCat a r)
 
-infixr 0 _⇉_
-_⇉_ : ∀ {a r} → Rel (Presheaf a r) (a ⊔ r)
-P ⇉ Q = Q ⇇ P
+-- infixr 0 _⇉_
+-- _⇉_ : ∀ {a r} → Rel (Presheaf a r) (a ⊔ r)
+-- P ⇉ Q = Q ⇇ P
 
-infixr 0 _⇛_
-_⇛_ : ∀ {a r} → Presheaf a r → Presheaf a r → Setoid (a ⊔ r) (a ⊔ r)
-P ⇛ Q = Q ⇚ P
+-- infixr 0 _⇛_
+-- _⇛_ : ∀ {a r} → Presheaf a r → Presheaf a r → Setoid (a ⊔ r) (a ⊔ r)
+-- P ⇛ Q = Q ⇚ P
 
 module Presheaf {a r} (P : Presheaf a r) where
 

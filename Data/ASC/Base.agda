@@ -10,16 +10,20 @@ open import Data.Nat.Base as ℕ using (ℕ; zero; suc; _+_; _≤?_)
 open import Data.Bool.Properties hiding (≤?-functorˡ)
 open import Category.Base
 open import Category.Functor
-open import Universe.Setoid hiding (_∘_)
+open import Universe.Setoid using (func)
 open import Data.Nat.Properties using (≤?-functorˡ; <?-functorˡ)
 open import Relation.Equality.Base
 open import Data.Unit.Core
 open import Relation.Equality.Base
 open import Universe.Set using (_≗_)
+open import Category.FunCat
+open import Data.Vec.Base
+open import Relation.Core
+open import Level
 
 record ASC (n : ℕ) : Set where
   field
-    revMap : Functor (⊆-Cat n) (Op ≤-Cat)
+    revMap : Functor (Op (⊆-Cat n)) ≤-Cat
 
   has : Subset n → Bool
   has = Functor.obj revMap
@@ -28,7 +32,7 @@ record ASC (n : ℕ) : Set where
   Has s = T (has s)
 
   has-⊆ : ∀ {s t} → s ⊆ t → has t ≤ has s
-  has-⊆ = _⟶_.func (Functor.hom revMap)
+  has-⊆ = Functor.hom revMap .func
 
   has-cong : ∀ {s t} → s ≗ t → has s ≡ has t
   has-cong s≗t = ≤-antisym (has-⊆ (λ i → ≡⇒≤ (sym (s≗t i))))
@@ -40,27 +44,35 @@ record ASC (n : ℕ) : Set where
   field
     hasAllPoints : ∀ i → Has (singleton i)
 
+open ASC public
+
 points : ∀ n → ASC n
-points n = record
-  { revMap = ≤?-functorˡ 1 ∘ ∣∣-functor
-  ; hasAllPoints = λ i → resp (λ m → T (m ≤? 1)) (sym (∣∣∘singleton i)) tt
-  }
+points _ .revMap = ≤?-functorˡ 1 ∘ Opposite ∣∣-functor
+points _ .hasAllPoints i = resp (λ m → T (m ≤? 1)) (sym (∣∣∘singleton i)) tt
 
 all : ∀ n → ASC n
-all n = record
-  { revMap = Const true
-  ; hasAllPoints = λ _ → tt
-  }
+all _ .revMap = Const <$> true
+all _ .hasAllPoints _ = tt
 
 cycle : ∀ n → ASC (2 + n)
-cycle n = record
-  { revMap = ≤?-functorˡ (1 + n) ∘ ∣∣-functor
-  ; hasAllPoints = λ i → resp (λ m → T (m ≤? 1 + n)) (sym (∣∣∘singleton i)) tt
-  }
+cycle n .revMap = ≤?-functorˡ (1 + n) ∘ Opposite ∣∣-functor
+cycle n .hasAllPoints i = resp (λ m → T (m ≤? 1 + n)) (sym (∣∣∘singleton i)) tt
 
 preimages : ∀ {m n} → (Fin m → Fin n) → ASC n → ASC m
-preimages f asc = record
-  { revMap = revMap ∘ image-functor f
-  ; hasAllPoints = λ i → Has-⊆ (≗⇒⊆ (image-singleton f i)) (hasAllPoints (f i))
-  }
-  where open ASC asc
+preimages f asc .revMap = asc .revMap ∘ Opposite (image-functor f)
+preimages f asc .hasAllPoints i = Has-⊆ asc (≗⇒⊆ (image-singleton f i)) (asc .hasAllPoints (f i))
+
+add : ∀ {n} → ASC n → Subset n → ASC n
+add asc s .revMap = ∨-functor ∘ asc .revMap ˢ ⊆?-functorˡ s
+add asc _ .hasAllPoints i = T-≤ a≤a∨b (asc .hasAllPoints i)
+
+addAll : ∀ {m n} → Vec (Subset n) m → ASC n → ASC n
+addAll = foldl add
+
+infix 4 _⊑_
+_⊑_ : ∀ {n} → Rel (ASC n) 0ℓ
+a ⊑ b = ∀ s → has a s ≤ has b s
+
+infix 4 _≅_
+_≅_ : ∀ {n} → Rel (ASC n) 0ℓ
+a ≅ b = has a ≗ has b

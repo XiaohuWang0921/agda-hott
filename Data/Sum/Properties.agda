@@ -60,7 +60,7 @@ map-id (inj₁ _) = refl
 map-id (inj₂ _) = refl
 
 ⊎-functor : ∀ {a b} → Functor (SetCat a) (FunCat (SetCat b) (SetCat (a ⊔ b)))
-⊎-functor .obj A .obj B = A ⊎ B
+⊎-functor .obj A .obj = A ⊎_
 ⊎-functor .obj _ .hom .func = map id
 ⊎-functor .obj _ .hom .cong = map-congʳ
 ⊎-functor .obj _ .mor-∘ = map-∘ id id
