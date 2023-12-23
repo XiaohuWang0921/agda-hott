@@ -25,6 +25,10 @@ suc-injective refl = refl
 pred≤pred : ∀ {m n} → suc m ≤ suc n → m ≤ n
 pred≤pred (s≤s m≤n) = m≤n
 
+∸-suc : ∀ {m n} → n ≤ m → suc (m ∸ n) ≡ suc m ∸ n
+∸-suc 0≤n = refl
+∸-suc (s≤s n≤m) = ∸-suc n≤m
+
 ≤?-≤ : ∀ {k l m n} → k ≤ l → m ≤ n → (l ≤? m) Bool.≤ (k ≤? n)
 ≤?-≤ 0≤n _ = b≤true
 ≤?-≤ (s≤s k≤l) 0≤n = false≤b
@@ -58,7 +62,7 @@ pred≤pred (s≤s m≤n) = m≤n
 
 ≤-refl : ∀ {n} → n ≤ n
 ≤-refl {zero} = 0≤n
-≤-refl {suc n} = s≤s ≤-refl
+≤-refl {suc _} = s≤s ≤-refl
 
 ≤-antisym : ∀ {m n} → m ≤ n → n ≤ m → m ≡ n
 ≤-antisym {zero} {zero} _ _ = refl
@@ -68,12 +72,27 @@ pred≤pred (s≤s m≤n) = m≤n
 ≤-trans 0≤n _ = 0≤n
 ≤-trans (s≤s l≤m) (s≤s m≤n) = s≤s (≤-trans l≤m m≤n)
 
-<-suc : ∀ {n} → n < suc n
-<-suc = ≤-refl
-
 <⇒≤ : ∀ {m n} → m < n → m ≤ n
 <⇒≤ {zero} (s≤s _) = 0≤n
 <⇒≤ {suc _} (s≤s m<n) = s≤s (<⇒≤ m<n)
+
+<-irrefl : ∀ {n} → n < n → ⊥
+<-irrefl {suc _} (s≤s n<n) = <-irrefl n<n
+
+<-trans : ∀ {l m n} → l < m → m < n → l < n
+<-trans l<m m<n = ≤-trans l<m (<⇒≤ m<n)
+
+<-asym : ∀ {m n} → m < n → n < m → ⊥
+<-asym = <-irrefl ∘₂ <-trans
+
+<-suc : ∀ {n} → n < suc n
+<-suc = ≤-refl
+
+suc≰0 : ∀ {n} → suc n ≤ 0 → ⊥
+suc≰0 ()
+
+n≮0 : ∀ {n} → n < 0 → ⊥
+n≮0 = suc≰0
 
 ≤-Cat : Category 0ℓ 0ℓ 0ℓ
 ≤-Cat = Preorder _≤_ ≤-refl ≤-trans

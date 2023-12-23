@@ -44,14 +44,26 @@ cong₂ _ = icong₂
 iresp : {P : A → Set b} → x ≡ y → P x → P y
 iresp refl px = px
 
+ipser : {P : A → Set b} → x ≡ y → P y → P x
+ipser refl py = py
+
 iresp₂ : {_~_ : A → B → Set c} → x ≡ y → u ≡ v → x ~ u → y ~ v
 iresp₂ refl refl x~u = x~u
+
+ipser₂ : {_~_ : A → B → Set c} → x ≡ y → u ≡ v → y ~ v → x ~ u
+ipser₂ refl refl y~v = y~v
 
 resp : (P : A → Set b) → x ≡ y → P x → P y
 resp _ = iresp
 
+pser : (P : A → Set b) → x ≡ y → P y → P x
+pser _ = ipser
+
 resp₂ : (_~_ : A → B → Set c) → x ≡ y → u ≡ v → x ~ u → y ~ v
 resp₂ _ = iresp₂
+
+pser₂ : (_~_ : A → B → Set c) → x ≡ y → u ≡ v → y ~ v → x ~ u
+pser₂ _ = ipser₂
 
 infixr 4.5 _=$=_
 _=$=_ = cong

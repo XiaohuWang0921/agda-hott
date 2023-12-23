@@ -10,6 +10,7 @@ open import Relation.Core
 open import Level
 open import Universe.Set
 open import Algebra.Core
+open import Data.Product.Base using (_,_)
 
 private
   variable
@@ -23,18 +24,19 @@ _⊆_ : ∀ {n} → Rel (Subset n) 0ℓ
 _⊆_ = Pointwise _≤_
 
 _⊆?_ : ∀ {n} → Subset n → Subset n → Bool
-_⊆?_ {zero} _ _ = true
-_⊆?_ {suc _} s t = (head s ≤? head t) ∧ (tail s ⊆? tail t)
+_⊆?_ [] [] = true
+_⊆?_ (b ∷ s) (c ∷ t) = (b ≤? c) ∧ (s ⊆? t)
 
 ∣_∣ : ∀ {n} → Subset n → ℕ
-∣_∣ {zero} _ = 0
-∣_∣ {suc n} s = (if s zero then suc else id) ∣ tail s ∣
+∣ [] ∣ = 0
+∣ false ∷ s ∣ = ∣ s ∣
+∣ true ∷ s ∣ = suc ∣ s ∣
 
 full : ∀ n → Subset n
-full _ = const true
+full n = repeat n true
 
 empty : ∀ n → Subset n
-empty _ = const false
+empty n = repeat n false
 
 ∁ : Op₁ (Subset n)
 ∁ = map not
@@ -53,28 +55,30 @@ _↝_ : ∀ {m n} → Subset m → Subset n → Set
 s ↝ t = Fin ∣ s ∣ → Fin ∣ t ∣
 
 embed : ∀ {n} {s t : Subset n} → s ⊆ t → s ↝ t
-embed {zero} _ ()
-embed {suc n} {s} {t} s⊆t with s zero | t zero | s⊆t zero
-... | false | false | _ = embed (λ i → s⊆t (suc i))
-... | false | true | _ = suc ∘ embed (λ i → s⊆t (suc i))
-... | true | true | _ = id ∣ embed (λ i → s⊆t (suc i))
+embed [] ()
+embed (b≤b {false} ∷ s⊆t) = embed s⊆t
+embed (b≤b {true} ∷ s⊆t) = id ∣ embed s⊆t
+embed (f≤t ∷ s⊆t) = suc ∘ embed s⊆t
 
-singleton : ∀ {n} → Fin n → Subset n
-singleton = _≟_
+single : ∀ {n} → Fin n → Subset n
+single zero = true ∷ empty _
+single (suc i) = false ∷ single i
+
+antisingle : ∀ {n} → Fin n → Subset n
+antisingle zero = false ∷ full _
+antisingle (suc i) = true ∷ antisingle i
 
 preimage : ∀ {m n} → (Fin m → Fin n) → Subset n → Subset m
-preimage = flip _∘_
+preimage f s = tabulate (lookup s ∘ f)
 
 image : ∀ {m n} → (Fin m → Fin n) → Subset m → Subset n
-image {zero} = const (const (const false))
-image {suc _} f s = (const (head s) ∩ singleton (f zero)) ∪ image (f ∘ suc) (s ∘ suc)
+image _ [] = empty _
+image f (b ∷ s) = repeat _ b ∩ single (f zero) ∪ image (f ∘ suc) s
 
 subSub : (s : Subset n) → Subset ∣ s ∣ → Subset n
-subSub {zero} _ t = t
-subSub {suc _} s t with head s
-... | false = λ where
-  zero → false
-  (suc i) → subSub (tail s) t i
-... | true = λ where
-  zero → head t
-  (suc i) → subSub (tail s) (tail t) i
+subSub [] _ = []
+subSub (false ∷ s) t = false ∷ subSub s t
+subSub (true ∷ s) (b ∷ t) = b ∷ subSub s t
+
+except : (s : Subset n) → Fin ∣ s ∣ → Subset n
+except s i = subSub s (antisingle i)

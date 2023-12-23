@@ -7,6 +7,8 @@ open import Universe.Set
 open import Relation.Equality.Base
 open import Level
 open import Data.Nat.Base
+open import Data.Fin.Base
+open import Data.Product.Base using (_×_; _,_; proj₁; proj₂)
 private
   variable
     a b c : Level
@@ -15,5 +17,21 @@ private
     C : Set c
     n : ℕ
 
-zipWith-cong : (f : A → B → C) {t u : Vec A n} {v w : Vec B n} → t ≗ u → v ≗ w → zipWith f t v ≗ zipWith f u w
-zipWith-cong f t≗u v≗w i = cong₂ f (t≗u i) (v≗w i)
+module _ {x y : A} {xs ys : Vec A n} where
+
+  ∷-injective : x ∷ xs ≡ y ∷ ys → x ≡ y × xs ≡ ys
+  ∷-injective refl = refl , refl
+
+  ∷-injectiveˡ : x ∷ xs ≡ y ∷ ys → x ≡ y
+  ∷-injectiveˡ refl = refl
+
+  ∷-injectiveʳ : x ∷ xs ≡ y ∷ ys → xs ≡ ys
+  ∷-injectiveʳ refl = refl
+
+tabulate-cong : {f g : Fin n → A} → f ≗ g → tabulate f ≡ tabulate g
+tabulate-cong {0} _ = refl
+tabulate-cong {suc _} f≗g = cong₂ _∷_ (f≗g zero) (tabulate-cong λ i → f≗g (suc i))
+
+repeatPointwise : ∀ {x y} {_~_ : A → B → Set c} n → x ~ y → Pointwise _~_ (repeat n x) (repeat n y)
+repeatPointwise 0 x~y = []
+repeatPointwise (suc n) x~y = x~y ∷ (repeatPointwise n x~y)

@@ -19,6 +19,14 @@ open import Relation.Reasoning.Set
 open import Category.FunCat
 open import Universe.Setoid using (func; cong)
 
+cast≗iresp : ∀ {m n} (m≡n : m ≡ n) → cast m≡n ≗ iresp m≡n
+cast≗iresp refl zero = refl
+cast≗iresp refl (suc i) = suc =$= cast≗iresp refl i
+
+tsac≗ipser : ∀ {m n} (m≡n : m ≡ n) → tsac m≡n ≗ ipser m≡n
+tsac≗ipser refl zero = refl
+tsac≗ipser refl (suc i) = suc =$= tsac≗ipser refl i
+
 splitAt∘inj+ : ∀ {m} n → splitAt m ∘ inj+ n ≗ inj₁
 splitAt∘inj+ _ zero = refl
 splitAt∘inj+ n (suc i) = Sum.map suc id =$= splitAt∘inj+ n i

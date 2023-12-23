@@ -9,6 +9,9 @@ open import Universe.Presheaf.Cycle
 open import Universe.Setoid
 
 record Fillable {a r} (P : Presheaf a r) (n : ℕ) : Set (a ⊔ r) where
+  module C = Setoid (CycStd P n ⇒ CycStd P n)
   field
-    fill : setoid P n ⟶ Presheaf.Space P (2 + n)
-    isSection : (open Setoid (setoid P n ⇒ setoid P n)) → boundary P n ∘ fill ≈ id
+    fill : CycStd P n ⟶ Presheaf.Space P (2 + n)
+    isSection :  boundary P n ∘ fill C.≈ id
+
+open Fillable public
