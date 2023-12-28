@@ -44,3 +44,11 @@ private
 ∈-addAll {suc _} ss asc zero = ⊑-∈ {_} {add asc (ss zero)} {addAll ss asc} (ss zero) (⊑-addAll (λ i → ss (suc i)) (add asc (ss zero))) (∈-add asc (ss zero))
 ∈-addAll {suc _} ss asc (suc i) = ∈-addAll (λ i → ss (suc i)) (add asc (ss zero)) i
 
+add-⊑ : ∀ {s} {a b : ASC n} → s ∈ b → a ⊑ b → add a s ⊑ b
+add-⊑ {b = b} s∈b a⊑b t rewrite sym (∨-idem {has b t}) = ∨-≤ (a⊑b t) (Reflects-→ (⊆?-Reflects-⊆ t _) (id-Reflects-T (has b t)) λ t⊆s → Has-⊆ b t⊆s s∈b)
+
+empty∈asc : (asc : ASC (suc n)) → empty _ ∈ asc
+empty∈asc asc = Has-⊆ asc empty⊆s (asc .hasAllPoints zero)
+
+-- add-empty : (asc : ASC (suc n)) → add asc (empty _) ≅ asc
+-- add-empty asc = ⊑-antisym {a = add asc (empty _)} {b = asc} (add-⊑ {a = asc} {b = asc} (empty∈asc asc) (⊑-refl {a = asc})) (⊑-add asc (empty _))

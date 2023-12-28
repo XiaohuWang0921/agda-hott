@@ -40,7 +40,7 @@ T : Bool → Set
 T false = ⊥
 T true = ⊤
 
-infix 4 _≤?_ _≟_ _≤_
+infixr 4 _≤?_ _≟_ _≤_
 
 _≤?_ : Op₂ Bool
 false ≤? _ = true

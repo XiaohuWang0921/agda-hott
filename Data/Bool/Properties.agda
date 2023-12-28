@@ -13,7 +13,7 @@ open import Universe.Set.Categorical
 open import Level
 open import Universe.Setoid using (func; cong)
 open import Category.FunCat
-open import Category.Natural hiding (id; _∘_)
+open import Category.Natural using (_⇉_; at; isNatural)
 
 private
   variable
@@ -53,12 +53,23 @@ false≤b : false ≤ b
 false≤b {false} = b≤b
 false≤b {true} = f≤t
 
+Reflects-≤ : ∀ {p q} {P : Set p} {Q : Set q} → b Reflects P → c Reflects Q → b ≤ c → P → Q
+Reflects-≤ ¬p _ (b≤b {false}) p = ⊥-elim (¬p p)
+Reflects-≤ _ q (b≤b {true}) _ = q
+Reflects-≤ _ q f≤t _ = q
+
+Reflects-→ : ∀ {p q} {P : Set p} {Q : Set q} → b Reflects P → c Reflects Q → (P → Q) → b ≤ c
+Reflects-→ {false} {false} _ _ _ = b≤b
+Reflects-→ {false} {true} _ _ _ = f≤t
+Reflects-→ {true} {false} p ¬q f = ⊥-elim (¬q (f p))
+Reflects-→ {true} {true} _ _ _ = b≤b
+
 not-≤ : a ≤ b → not b ≤ not a
 not-≤ b≤b = b≤b
 not-≤ f≤t = f≤t
 
 T-≤ : a ≤ b → T a → T b
-T-≤ {true} {true} _ _ = tt
+T-≤ {a} {b} = Reflects-≤ (id-Reflects-T a) (id-Reflects-T b)
 
 ≤?-≤ : a ≤ b → c ≤ d → (b ≤? c) ≤ (a ≤? d)
 ≤?-≤ {false} {false} _ = const b≤b
@@ -69,6 +80,10 @@ T-≤ {true} {true} _ _ = tt
 ∧-≤ {false} {false} = const (const b≤b)
 ∧-≤ {false} {true} = const (const false≤b)
 ∧-≤ {true} {true} = const id
+
+-- ∧-idem : b ∧ b ≡ b
+-- ∧-idem {false} = refl
+-- ∧-idem {true} = refl
 
 a∧b≤a : a ∧ b ≤ a
 a∧b≤a {false} = b≤b
@@ -82,6 +97,10 @@ a∧b≤b {true} = b≤b
 ∨-≤ {false} {false} = const id
 ∨-≤ {false} {true} = const (const b≤true)
 ∨-≤ {true} {true} = const (const b≤b)
+
+∨-idem : b ∨ b ≡ b
+∨-idem {false} = refl
+∨-idem {true} = refl
 
 ∨-false : b ∨ false ≡ b
 ∨-false {false} = refl
@@ -98,6 +117,9 @@ a≤a∨b {true} = b≤b
 b≤a∨b : ∀ {b} → b ≤ a ∨ b
 b≤a∨b {false} = b≤b
 b≤a∨b {true} = b≤true
+
+eval : (a ≤? b) ≤ c ≤? d → a ≤ b → c ≤ d
+eval = Reflects-≤ (≤?-Reflects-≤ _ _) (≤?-Reflects-≤ _ _)
 
 ≤-refl : b ≤ b
 ≤-refl = b≤b
