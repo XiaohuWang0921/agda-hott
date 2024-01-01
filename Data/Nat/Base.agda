@@ -21,3 +21,6 @@ data _≤_ : Rel ℕ 0ℓ where
 
 _<_ : Rel ℕ 0ℓ
 _<_ = _≤_ ∘ suc
+
+pred : ℕ → ℕ
+pred = _∸ 1

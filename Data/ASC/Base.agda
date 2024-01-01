@@ -61,13 +61,13 @@ preimages : ∀ {m n} → (Fin m → Fin n) → ASC n → ASC m
 preimages f asc .revMap = asc .revMap ∘ Opposite (image-functor f)
 preimages f asc .hasAllPoints i = Has-⊆ asc (≡⇒⊆ (image-single f i)) (asc .hasAllPoints (f i))
 
-add : ∀ {n} → ASC n → Subset n → ASC n
-add asc s .revMap = ∨-functor ∘ asc .revMap ˢ ⊆?-functorˡ s
-add asc _ .hasAllPoints i = T-≤ a≤a∨b (asc .hasAllPoints i)
+add : ∀ {n} → Subset n → ASC n → ASC n
+add s asc .revMap = ∨-functor ∘ asc .revMap ˢ ⊆?-functorˡ s
+add _ asc .hasAllPoints i = T-≤ a≤a∨b (asc .hasAllPoints i)
 
 addAll : ∀ {m n} → (Fin m → Subset n) → ASC n → ASC n
 addAll {zero} _ asc = asc
-addAll {suc _} ss asc = addAll (λ i → ss (suc i)) (add asc (ss zero))
+addAll {suc _} ss asc = addAll (λ i → ss (suc i)) (add (ss zero) asc)
 
 infix 4 _⊑_
 _⊑_ : ∀ {n} → Rel (ASC n) 0ℓ

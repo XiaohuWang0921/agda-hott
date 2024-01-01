@@ -5,7 +5,7 @@ module Data.Fin.Subset.Properties where
 open import Data.Fin.Base as Fin
 open import Data.Fin.Subset.Base
 open import Data.Fin.Properties hiding (suc-injective)
-open import Data.Nat.Base as ℕ using (ℕ; zero; suc; 0≤n; s≤s; _∸_; _+_)
+open import Data.Nat.Base as ℕ using (ℕ; zero; suc; 0≤n; s≤s; _∸_; _+_; pred)
 open import Universe.Set
 open import Relation.Equality.Base hiding (cong)
 open import Data.Unit.Core
@@ -94,7 +94,7 @@ empty⊆s {_} {_ ∷ s} = false≤b ∷ empty⊆s
 ∣∣∘single {suc n} zero = suc =$= ∣∣∘empty n
 ∣∣∘single {suc _} (suc i) = ∣∣∘single i
 
-∣∣∘antisingle : ∣_∣ ∘ antisingle {n} ≗ const (n ∸ 1)
+∣∣∘antisingle : ∣_∣ ∘ antisingle {n} ≗ const (pred n)
 ∣∣∘antisingle {suc n} zero = ∣∣∘full n
 ∣∣∘antisingle {suc (suc _)} (suc i) = suc =$= (∣∣∘antisingle i)
 
@@ -104,7 +104,7 @@ empty⊆s {_} {_ ∷ s} = false≤b ∷ empty⊆s
 ∣∣∘subSub (true ∷ s) (false ∷ t) = ∣∣∘subSub s t
 ∣∣∘subSub (true ∷ s) (true ∷ t) = suc =$= ∣∣∘subSub s t
 
-∣∣∘except : (s : Subset n) → ∣_∣ ∘ except s ≗ const (∣ s ∣ ∸ 1)
+∣∣∘except : (s : Subset n) → ∣_∣ ∘ except s ≗ const (pred ∣ s ∣)
 ∣∣∘except s i = trans (∣∣∘subSub s (antisingle i)) (∣∣∘antisingle i)
 
 ∣∣≡n : ∀ s → ∣ s ∣ ≡ n → s ≡ full n

@@ -22,6 +22,9 @@ private
 false≢true : false ≢ true
 false≢true ()
 
+T-irrel : {x y : T b} → x ≡ y
+T-irrel {true} {tt} {tt} = refl
+
 id-Reflects-T : ∀ b → b Reflects T b
 id-Reflects-T false = id
 id-Reflects-T true = tt
@@ -63,6 +66,9 @@ Reflects-→ {false} {false} _ _ _ = b≤b
 Reflects-→ {false} {true} _ _ _ = f≤t
 Reflects-→ {true} {false} p ¬q f = ⊥-elim (¬q (f p))
 Reflects-→ {true} {true} _ _ _ = b≤b
+
+T-Reflects : ∀ {p} {P : Set p} → b Reflects P → T b → P
+T-Reflects {b = true} p tt = p
 
 not-≤ : a ≤ b → not b ≤ not a
 not-≤ b≤b = b≤b

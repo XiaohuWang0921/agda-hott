@@ -107,5 +107,5 @@ pinch = proj₂ ∘₂ flip swap
 punchIn' : Fin n → Fin (n ∸ 1) → Fin n
 punchIn' = proj₁ ∘₂ swap'
 
-pinch' : Fin (n ∸ 1) → Fin n → Fin (n ∸ 1)
+pinch' : Fin (pred n) → Fin n → Fin (pred n)
 pinch' = proj₂ ∘₂ flip swap'
