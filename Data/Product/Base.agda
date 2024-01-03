@@ -23,6 +23,9 @@ A × B = Σ A (λ _ → B)
 map : (A → C) → (B → D) → A × B → C × D
 map f g (x , y) = f x , g y
 
+mapp : {P : A → Set b} {Q : C → Set d} → (f : A → C) → (∀ {x} → P x → Q (f x)) → Σ A P → Σ C Q
+mapp f g (x , y) = f x , g y
+
 curry : (A × B → C) → A → B → C
 curry f x y = f (x , y)
 
