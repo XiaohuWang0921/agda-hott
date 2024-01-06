@@ -4,7 +4,7 @@ module Data.Fin.Subset.Base where
 
 open import Data.Nat.Base hiding (_≤_; _≤?_)
 open import Data.Fin.Base
-open import Data.Vec.Base using (Vec; []; _∷_)
+--open import Data.Vec.Base using (Vec; []; _∷_)
 open import Data.Bool.Base hiding (_≟_)
 open import Relation.Core
 open import Level
@@ -37,13 +37,13 @@ infixr 5 _∺_
 _∺_ : Bool → Subset k → Subset (suc k)
 b ∺ s = mapp (inc b) (b ∷_) s
 
-toVec : CSet k l → Vec Bool k
-toVec [] = []
-toVec (b ∷ s) = b ∷ toVec s
+-- toVec : CSet k l → Vec Bool k
+-- toVec [] = []
+-- toVec (b ∷ s) = b ∷ toVec s
 
-fromVec : Vec Bool k → Subset k
-fromVec [] = 0 , []
-fromVec (b ∷ v) = mapp (inc b) (b ∷_) (fromVec v)
+-- fromVec : Vec Bool k → Subset k
+-- fromVec [] = 0 , []
+-- fromVec (b ∷ v) = mapp (inc b) (b ∷_) (fromVec v)
 
 zipWith : Op₂ Bool → CSet k l → CSet k m → Subset k
 zipWith _ [] [] = 0 , []
@@ -103,7 +103,7 @@ single (suc i) = false ∷ single i
 
 antisingle : Fin k → CSet k (pred k)
 antisingle zero = false ∷ full _
-antisingle {suc (suc _)} (suc i) = true ∷ (antisingle i)
+antisingle {suc (suc _)} (suc i) = true ∷ antisingle i
 
 preimage : (Fin k → Fin l) → CSet l m → Subset k
 preimage f s = tabulate ((s ∋?_) ∘ f)
@@ -113,10 +113,10 @@ image _ [] = 0 , empty _
 image f (false ∷ s) = image (f ∘ suc) s
 image f (true ∷ s) = (single (f zero)) ∪ image (f ∘ suc) s .proj₂
 
-subSub : CSet k l → CSet l m → CSet k m
-subSub [] t = t
-subSub (false ∷ s) t = false ∷ subSub s t
-subSub (true ∷ s) (b ∷ t) = b ∷ subSub s t
+subsub : CSet k l → CSet l m → CSet k m
+subsub [] t = t
+subsub (false ∷ s) t = false ∷ subsub s t
+subsub (true ∷ s) (b ∷ t) = b ∷ subsub s t
 
 except : CSet k l → Fin l → CSet k (pred l)
-except s i = subSub s (antisingle i)
+except s i = subsub s (antisingle i)

@@ -108,9 +108,9 @@ a∧b≤b {true} = b≤b
 ∨-idem {false} = refl
 ∨-idem {true} = refl
 
-∨-false : b ∨ false ≡ b
-∨-false {false} = refl
-∨-false {true} = refl
+b∨false : b ∨ false ≡ b
+b∨false {false} = refl
+b∨false {true} = refl
 
 ∨-true : b ∨ true ≡ true
 ∨-true {false} = refl

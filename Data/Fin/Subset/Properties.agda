@@ -10,13 +10,12 @@ open import Universe.Set
 open import Relation.Equality.Base hiding (cong)
 open import Data.Unit.Core
 open import Data.Bool.Base hiding (_≟_)
-open import Data.Vec.Base
+-- open import Data.Vec.Base
 open import Data.Bool.Properties as Boolₚ
 open import Data.Nat.Properties as ℕₚ hiding (≤?-Reflects-≤; ≤?-≤; ≤-refl; ≤-antisym; ≤-trans; ≤-Cat)
 open import Category.Base
 open import Level
 open import Category.Functor hiding (_∘_)
-open import Data.Vec.Properties
 open import Universe.Setoid using (func; cong)
 open import Category.FunCat
 open import Category.Natural using (at; isNatural)
@@ -27,122 +26,128 @@ open import Data.Sum.Base as Sum
 
 private
   variable
-    m n : ℕ
+    k l m n o : ℕ
+    s : CSet k l
+    t : CSet k m
+    u : CSet k n
+    v : CSet k o
 
-⊆?-Reflects-⊆ : (s t : Subset n) → (s ⊆? t) Reflects (s ⊆ t)
-⊆?-Reflects-⊆ [] [] = []
-⊆?-Reflects-⊆ (b ∷ s) (c ∷ t) with b ≤? c | ≤?-Reflects-≤ b c
+⊂-irrel : (x y : s ⊂ t) → x ≡ y
+⊂-irrel [] [] = refl
+⊂-irrel (b≤b {false} ∷ x) (b≤b ∷ y) = b≤b ∷_ =$= ⊂-irrel x y
+⊂-irrel (b≤b {true} ∷ x) (b≤b ∷ y) = b≤b ∷_ =$= ⊂-irrel x y
+⊂-irrel (f≤t ∷ x) (f≤t ∷ y) = f≤t ∷_ =$= ⊂-irrel x y
+
+⊂?-Reflects-⊂ : (s : CSet k l) (t : CSet k m) → (s ⊂? t) Reflects (s ⊂ t)
+⊂?-Reflects-⊂ [] [] = []
+⊂?-Reflects-⊂ (b ∷ s) (c ∷ t) with b ≤? c | ≤?-Reflects-≤ b c
 ... | false | b≰c = λ where
   (b≤c ∷ _) → b≰c b≤c
-... | true | b≤c with s ⊆? t | ⊆?-Reflects-⊆ s t
+... | true | b≤c with s ⊂? t | ⊂?-Reflects-⊂ s t
 ... | false | s⊈t = λ where
-  (_ ∷ s⊆t) → s⊈t s⊆t
-... | true | s⊆t = b≤c ∷ s⊆t
+  (_ ∷ s⊂t) → s⊈t s⊂t
+... | true | s⊂t = b≤c ∷ s⊂t
+
+⊆?-Reflects-⊆ : (s t : Subset k) → (s ⊆? t) Reflects (s ⊆ t)
+⊆?-Reflects-⊆ s t = ⊂?-Reflects-⊂ (s .proj₂) (t .proj₂)
+
+⊂?-⊂ : s ⊂ t → u ⊂ v → (t ⊂? u) ≤ (s ⊂? v)
+⊂?-⊂ [] [] = b≤b
+⊂?-⊂ (a≤b ∷ s⊂t) (c≤d ∷ u⊂v) = ∧-≤ (≤?-≤ a≤b c≤d) (⊂?-⊂ s⊂t u⊂v)
 
 ⊆?-⊆ : {s t u v : Subset n} → s ⊆ t → u ⊆ v → (t ⊆? u) ≤ (s ⊆? v)
-⊆?-⊆ [] [] = b≤b
-⊆?-⊆ (a≤b ∷ s⊆t) (c≤d ∷ u⊆v) = ∧-≤ (≤?-≤ a≤b c≤d) (⊆?-⊆ s⊆t u⊆v)
+⊆?-⊆ = ⊂?-⊂
+
+⊂-refl : s ⊂ s
+⊂-refl {s = []} = []
+⊂-refl {s = _ ∷ _} = ≤-refl ∷ ⊂-refl
 
 ⊆-refl : {s : Subset n} → s ⊆ s
-⊆-refl {zero} {[]} = []
-⊆-refl {suc _} {_ ∷ _} = ≤-refl ∷ ⊆-refl
+⊆-refl = ⊂-refl
+
+⊂-antisym : s ⊂ t → t ⊂ s → s ∼ t
+⊂-antisym [] [] = refl , refl
+⊂-antisym (b≤b {false} ∷ s⊂t) (b≤b ∷ t⊂s) with ⊂-antisym s⊂t t⊂s
+... | refl , refl = refl , refl
+⊂-antisym (b≤b {true} ∷ s⊂t) (b≤b ∷ t⊂s) with ⊂-antisym s⊂t t⊂s
+... | refl , refl = refl , refl
 
 ⊆-antisym : {s t : Subset n} → s ⊆ t → t ⊆ s → s ≡ t
-⊆-antisym [] [] = refl
-⊆-antisym (b≤b ∷ s⊆t) (_ ∷ t⊆s) = _ ∷_ =$= ⊆-antisym s⊆t t⊆s
+⊆-antisym s⊆t t⊆s with ⊂-antisym s⊆t t⊆s
+... | refl , refl = refl
 
-⊆-trans : {r s t : Subset n} → r ⊆ s → s ⊆ t → r ⊆ t
-⊆-trans [] [] = []
-⊆-trans (a≤b ∷ r⊆s) (b≤c ∷ s⊆t) = (≤-trans a≤b b≤c) ∷ ⊆-trans r⊆s s⊆t
+⊂-trans : s ⊂ t → t ⊂ u → s ⊂ u
+⊂-trans [] [] = []
+⊂-trans (a≤b ∷ r⊂s) (b≤c ∷ s⊂t) = (≤-trans a≤b b≤c) ∷ (⊂-trans r⊂s s⊂t)
+
+⊆-trans : {s t u : Subset n} → s ⊆ t → t ⊆ u → s ⊆ u
+⊆-trans = ⊂-trans
+
+∼⇒⊂ : s ∼ t → s ⊂ t
+∼⇒⊂ (refl , refl) = ⊂-refl
 
 ≡⇒⊆ : {s t : Subset n} → s ≡ t → s ⊆ t
-≡⇒⊆ s≡t rewrite s≡t = ⊆-refl
+≡⇒⊆ refl = ⊆-refl
 
-s⊆full : {s : Subset n} → s ⊆ full n
-s⊆full {_} {[]} = []
-s⊆full {_} {_ ∷ s} = b≤true ∷ s⊆full
+s⊂full : {s : CSet k l} → s ⊂ full k
+s⊂full {s = []} = []
+s⊂full {s = _ ∷ _} = b≤true ∷ s⊂full
 
-empty⊆s : {s : Subset n} → empty n ⊆ s
-empty⊆s {_} {[]} = []
-empty⊆s {_} {_ ∷ s} = false≤b ∷ empty⊆s
+empty⊂s : {s : CSet k l} → empty k ⊂ s
+empty⊂s {s = []} = []
+empty⊂s {s = _ ∷ _} = false≤b ∷ empty⊂s
 
-∣∣-⊆ : {s t : Subset n} → s ⊆ t → ∣ s ∣ ℕ.≤ ∣ t ∣
-∣∣-⊆ [] = 0≤n
-∣∣-⊆ (b≤b {false} ∷ s⊆t) = ∣∣-⊆ s⊆t
-∣∣-⊆ (b≤b {true} ∷ s⊆t) = s≤s (∣∣-⊆ s⊆t)
-∣∣-⊆ (f≤t ∷ s⊆t) = <⇒≤ (s≤s (∣∣-⊆ s⊆t))
+⊂⇒≤ : {s : CSet k l} {t : CSet k m} → s ⊂ t → l ℕ.≤ m
+⊂⇒≤ [] = 0≤n
+⊂⇒≤ (b≤b {false} ∷ s⊂t) = ⊂⇒≤ s⊂t
+⊂⇒≤ (b≤b {true} ∷ s⊂t) = s≤s (⊂⇒≤ s⊂t)
+⊂⇒≤ (f≤t ∷ s⊂t) = <⇒≤ (s≤s (⊂⇒≤ s⊂t))
 
-∣s∣≤n : (s : Subset n) → ∣ s ∣ ℕ.≤ n
-∣s∣≤n [] = 0≤n
-∣s∣≤n (false ∷ s) = ℕₚ.≤-trans (∣s∣≤n s) (<⇒≤ <-suc)
-∣s∣≤n (true ∷ s) = s≤s (∣s∣≤n s)
+l≤k : (s : CSet k l) → l ℕ.≤ k
+l≤k [] = 0≤n
+l≤k (false ∷ s) = <⇒≤ (s≤s (l≤k s))
+l≤k (true ∷ s) = s≤s (l≤k s)
 
-∣∣∘full : ∀ n → ∣ full n ∣ ≡ n
-∣∣∘full zero = refl
-∣∣∘full (suc n) = suc =$= ∣∣∘full n
+l≡k : (s : CSet k l) (l≡k : l ≡ k) → resp (CSet k) l≡k s ≡ full k
+l≡k [] refl = refl
+l≡k (false ∷ s) refl = ⊥-elim (<-irrefl (l≤k s))
+l≡k (true ∷ s) refl = true ∷_ =$= (l≡k s refl)
 
-∣∣∘empty : ∀ n → ∣ empty n ∣ ≡ 0
-∣∣∘empty zero = refl
-∣∣∘empty (suc n) = ∣∣∘empty n
+l≡0 : (s : CSet k l) (l≡0 : l ≡ 0) → resp (CSet k) l≡0 s ≡ empty k
+l≡0 [] refl = refl
+l≡0 (false ∷ s) refl = false ∷_ =$= (l≡0 s refl)
 
-∣∣∘∁ : ∣_∣ ∘ ∁ {n} ≗ (n ∸_) ∘ ∣_∣
-∣∣∘∁ [] = refl
-∣∣∘∁ (false ∷ s) = trans (suc =$= ∣∣∘∁ s) (∸-suc (∣s∣≤n s))
-∣∣∘∁ (true ∷ s) = ∣∣∘∁ s
+l≡1 : (s : CSet k l) (l≡1 : l ≡ 1) → Σ (Fin k) ((resp (CSet k) l≡1 s ≡_) ∘ single)
+l≡1 (false ∷ s) refl = mapp suc (false ∷_ =$=_) (l≡1 s refl)
+l≡1 (true ∷ s) refl = zero , (true ∷_ =$= (l≡0 s refl))
 
-∣∣∘single : ∣_∣ ∘ single {n} ≗ const 1
-∣∣∘single {suc n} zero = suc =$= ∣∣∘empty n
-∣∣∘single {suc _} (suc i) = ∣∣∘single i
+k≡l+1 : (s : CSet (suc l) l) → Σ (Fin (suc l)) ((s ≡_) ∘ antisingle)
+k≡l+1 (false ∷ s) = zero , (false ∷_ =$= (l≡k s refl))
+k≡l+1 (true ∷ s) = mapp suc (true ∷_ =$=_) (k≡l+1 s)
 
-∣∣∘antisingle : ∣_∣ ∘ antisingle {n} ≗ const (pred n)
-∣∣∘antisingle {suc n} zero = ∣∣∘full n
-∣∣∘antisingle {suc (suc _)} (suc i) = suc =$= (∣∣∘antisingle i)
+∪-⊂ : s ⊂ t → u ⊂ v → s ∪ u ⊆ t ∪ v
+∪-⊂ [] [] = []
+∪-⊂ (a≤b ∷ s⊆t) (b≤c ∷ t⊆u) = (∨-≤ a≤b b≤c) ∷ (∪-⊂ s⊆t t⊆u)
 
-∣∣∘subSub : (s : Subset n) → ∣_∣ ∘ subSub s ≗ ∣_∣
-∣∣∘subSub [] [] = refl
-∣∣∘subSub (false ∷ s) t = ∣∣∘subSub s t
-∣∣∘subSub (true ∷ s) (false ∷ t) = ∣∣∘subSub s t
-∣∣∘subSub (true ∷ s) (true ∷ t) = suc =$= ∣∣∘subSub s t
+∩-⊂ : s ⊂ t → u ⊂ v → s ∩ u ⊆ t ∩ v
+∩-⊂ [] [] = []
+∩-⊂ (a≤b ∷ s⊆t) (b≤c ∷ t⊆u) = (∧-≤ a≤b b≤c) ∷ (∩-⊂ s⊆t t⊆u)
 
-∣∣∘except : (s : Subset n) → ∣_∣ ∘ except s ≗ const (pred ∣ s ∣)
-∣∣∘except s i = trans (∣∣∘subSub s (antisingle i)) (∣∣∘antisingle i)
+s∪empty : s ∪ empty k ≡ (_ , s)
+s∪empty {s = []} = refl
+s∪empty {s = _ ∷ _} = cong₂ _∺_ b∨false s∪empty
 
-∣∣≡n : ∀ s → ∣ s ∣ ≡ n → s ≡ full n
-∣∣≡n [] _ = refl
-∣∣≡n (false ∷ s) ∣s∣≡sn = ⊥-elim (<-irrefl (resp (ℕ._≤ _) ∣s∣≡sn (∣s∣≤n s)))
-∣∣≡n (true ∷ s) s∣s∣≡sn = true ∷_ =$= ∣∣≡n s (suc-injective s∣s∣≡sn)
+empty∪s : empty n ∪ s ≡ (_ , s)
+empty∪s {s = []} = refl
+empty∪s {s = b ∷ _} = b ∺_ =$= empty∪s
 
-∣∣≡0 : ∀ s → ∣ s ∣ ≡ 0 → s ≡ empty n
-∣∣≡0 [] _ = refl
-∣∣≡0 (false ∷ s) ∣s∣≡0 = false ∷_ =$= ∣∣≡0 s ∣s∣≡0
+empty∩s : empty k ∩ s ≡ (0 , empty k)
+empty∩s {s = []} = refl
+empty∩s {s = _ ∷ _} = false ∺_ =$= empty∩s
 
-∣∣≡1 : ∀ s → ∣ s ∣ ≡ 1 → Σ (Fin n) λ i → s ≡ single i
-∣∣≡1 (false ∷ s) ∣s∣≡1 = let j , s≡single = ∣∣≡1 s ∣s∣≡1 in suc j , (false ∷_ =$= s≡single)
-∣∣≡1 (true ∷ s) s∣s∣≡1 = zero , (true ∷_ =$= (∣∣≡0 s (suc-injective s∣s∣≡1)))
-
-∪-⊆ : {s t u v : Subset n} → s ⊆ t → u ⊆ v → s ∪ u ⊆ t ∪ v
-∪-⊆ [] [] = []
-∪-⊆ (a≤b ∷ s⊆t) (b≤c ∷ t⊆u) = (∨-≤ a≤b b≤c) ∷ (∪-⊆ s⊆t t⊆u)
-
-∩-⊆ : {s t u v : Subset n} → s ⊆ t → u ⊆ v → s ∩ u ⊆ t ∩ v
-∩-⊆ [] [] = []
-∩-⊆ (a≤b ∷ s⊆t) (b≤c ∷ t⊆u) = (∧-≤ a≤b b≤c) ∷ (∩-⊆ s⊆t t⊆u)
-
-∪-empty : ∀ {s} → s ∪ empty n ≡ s
-∪-empty {_} {[]} = refl
-∪-empty {_} {_ ∷ s} = cong₂ _∷_ ∨-false ∪-empty
-
-empty-∪ : ∀ {s} → empty n ∪ s ≡ s
-empty-∪ {_} {[]} = refl
-empty-∪ {_} {b ∷ s} = b ∷_ =$= empty-∪
-
-empty-∩ : ∀ {s} → empty n ∩ s ≡ empty n
-empty-∩ {_} {[]} = refl
-empty-∩ {_} {_ ∷ s} = false ∷_ =$= empty-∩
-
-full-∩ : ∀ {s} → full n ∩ s ≡ s
-full-∩ {_} {[]} = refl
-full-∩ {_} {b ∷ s} = b ∷_ =$= full-∩
+full-∩ : full k ∩ s ≡ (_ , s)
+full-∩ {s = []} = refl
+full-∩ {s = b ∷ _} = b ∺_ =$= full-∩
 
 -- single-cast : ∀ .(m≡n : m ≡ n) i → single (cast m≡n i) ≗ vecCast m≡n (single i)
 -- single-cast {suc _} {suc _} _ zero zero = refl
@@ -153,52 +158,27 @@ full-∩ {_} {b ∷ s} = b ∷_ =$= full-∩
 -- antisingle-cast : ∀ .(m≡n : m ≡ n) i → antisingle (cast m≡n i) ≗ vecCast m≡n (antisingle i)
 -- antisingle-cast m≡n i j = not =$= single-cast m≡n i j
 
-image-cong : ∀ {f g : Fin m → Fin n} s → f ≗ g → image f s ≡ image g s
+image-cong : ∀ {f g : Fin k → Fin l} (s : CSet k m) → f ≗ g → image f s ≡ image g s
 image-cong [] _ = refl
-image-cong (b ∷ s) f≗g = cong₂ _∪_ (zipWith _ _ =$= (single =$= (f≗g zero))) (image-cong s λ i → f≗g (suc i))
+image-cong (false ∷ s) f≗g = image-cong s λ i → f≗g (suc i)
+image-cong (true ∷ s) f≗g rewrite (f≗g zero) rewrite image-cong s λ i → f≗g (suc i) = refl
 
-image-⊆ : ∀ (f : Fin m → Fin n) {s t} → s ⊆ t → image f s ⊆ image f t
-image-⊆ _ [] = ⊆-refl
-image-⊆ f (b≤c ∷ s⊆t) = ∪-⊆ (∩-⊆ (repeatPointwise _ b≤c) ⊆-refl) (image-⊆ (f ∘ suc) s⊆t)
+image-⊂ : ∀ (f : Fin m → Fin n) → s ⊂ t → image f s ⊆ image f t
+image-⊂ _ [] = ⊆-refl
+image-⊂ f (b≤b {false} ∷ s⊂t) = image-⊂ (f ∘ suc) s⊂t
+image-⊂ f (b≤b {true} ∷ s⊂t) = ∪-⊂ (⊂-refl {s = single (f zero)}) (image-⊂ (f ∘ suc) s⊂t)
+image-⊂ {s = false ∷ s} f (f≤t ∷ s⊂t) rewrite sym (empty∪s {s = image (f ∘ suc) s .proj₂}) = ∪-⊂ (empty⊂s {s = single (f zero)}) (image-⊂ (f ∘ suc) s⊂t)
 
-image-empty : (f : Fin m → Fin n) → image f (empty m) ≡ empty n
+image-empty : (f : Fin k → Fin l) → image f (empty k) ≡ (0 , empty l)
 image-empty {zero} _ = refl
-image-empty {suc m} f = 
-  image f (empty (suc m)) ≡⟨⟩
-  image f (repeat (suc m) false) ≡⟨⟩
-  image f (false ∷ repeat m false) ≡⟨⟩
-  repeat _ false ∩ single (f zero) ∪ image (f ∘ suc) (repeat m false) ≡⟨⟩
-  empty _ ∩ single (f zero) ∪ image (f ∘ suc) (empty m) ≡⟨ _∪ image (f ∘ suc) (empty m) =$= empty-∩ ⟩
-  empty _ ∪ image (f ∘ suc) (empty m) ≡⟨ empty-∪ ⟩
-  image (f ∘ suc) (empty m) ≡⟨ image-empty (f ∘ suc) ⟩
-  empty _ ∎
-  where open Relation.Reasoning _≡_
-        open Equiv refl trig
+image-empty {suc _} f = image-empty (f ∘ suc)
 
-image-single : ∀ (f : Fin m → Fin n) i → image f (single i) ≡ single (f i)
-image-single f zero = 
-  image f (single zero) ≡⟨⟩
-  image f (true ∷ empty _) ≡⟨⟩
-  repeat _ true ∩ single (f zero) ∪ image (f ∘ suc) (empty _) ≡⟨⟩
-  full _ ∩ single (f zero) ∪ image (f ∘ suc) (empty _) ≡⟨ _∪ image (f ∘ suc) (empty _) =$= full-∩ ⟩
-  single (f zero) ∪ image (f ∘ suc) (empty _) ≡⟨ single (f zero) ∪_ =$= (image-empty (f ∘ suc)) ⟩
-  single (f zero) ∪ empty _ ≡⟨ ∪-empty ⟩
-  single (f zero) ∎
-  where open Relation.Reasoning _≡_
-        open Equiv refl trig
-image-single f (suc i) = 
-  image f (single (suc i)) ≡⟨⟩
-  (image f (false ∷ single i) ≡⟨⟩
-  repeat _ false ∩ single (f zero) ∪ image (f ∘ suc) (single i) ≡⟨⟩
-  empty _ ∩ single (f zero) ∪ image (f ∘ suc) (single i) ≡⟨ _∪ image (f ∘ suc) (single i) =$= empty-∩ ⟩
-  empty _ ∪ image (f ∘ suc) (single i) ≡⟨ empty-∪ ⟩
-  image (f ∘ suc) (single i) ≡⟨ image-single (f ∘ suc) i ⟩
-  single (f (suc i)) ∎)
-  where open Relation.Reasoning _≡_
-        open Equiv refl trig
+image-single : ∀ (f : Fin k → Fin l) i → image f (single i) ≡ (1 , single (f i))
+image-single f zero rewrite image-empty (f ∘ suc) = s∪empty
+image-single f (suc i) = image-single (f ∘ suc) i
 
 -- image-preimage : ∀ (f : Fin m → Fin n) s → image f (preimage f s) ⊆ s
--- image-preimage {zero} _ _ = empty⊆s
+-- image-preimage {zero} _ _ = empty⊂s
 -- image-preimage {suc _} f s i = {!!}
 
 -- preimage-image : ∀ (f : Fin m → Fin n) s → s ⊆ preimage f (image f s)
@@ -212,8 +192,8 @@ image-single f (suc i) =
 --   zero → refl
 --   (suc i) → suc =$= embed-irrel (tail-⊆ a) (tail-⊆ b) i
 
--- embed-refl : {s : Subset n} (s⊆s : s ⊆ s) → embed s⊆s ≗ id
--- embed-refl {suc _} {s} s⊆s with s zero | s⊆s zero
+-- embed-refl : {s : Subset n} (s⊂s : s ⊆ s) → embed s⊂s ≗ id
+-- embed-refl {suc _} {s} s⊂s with s zero | s⊂s zero
 -- ... | false | _ = embed-refl (tail-⊆ s⊆s)
 -- ... | true | _ = λ where
 --   zero → refl
@@ -228,88 +208,51 @@ image-single f (suc i) =
 --   zero → refl
 --   (suc i) → suc =$= embed-trans (tail-⊆ s⊆t) (tail-⊆ t⊆u) (tail-⊆ s⊆u) i
 
-subSub⊆s : ∀ s (t : Subset ∣ s ∣) → subSub {n} s t ⊆ s
-subSub⊆s [] [] = []
-subSub⊆s (false ∷ s) t = b≤b ∷ subSub⊆s s t
-subSub⊆s (true ∷ s) (b ∷ t) = b≤true ∷ subSub⊆s s t
+subsub-fullˡ : (s : CSet k l) → subsub (full k) s ≡ s
+subsub-fullˡ [] = refl
+subsub-fullˡ (b ∷ s) = b ∷_ =$= (subsub-fullˡ s)
 
--- subSub-⊆ : ∀ s {u v} → u ⊆ v → subSub {n} s u ⊆ subSub s v
--- subSub-⊆ {suc _} s {u} {v} u⊆v with head s
--- ... | false = λ where
---   zero → b≤b
---   (suc i) → subSub-⊆ (tail s) u⊆v i
--- ... | true = λ where
---   zero → u⊆v zero
---   (suc i) → subSub-⊆ (tail s) (tail-⊆ u⊆v) i
+subsub-fullʳ : (s : CSet k l) → subsub s (full l) ≡ s
+subsub-fullʳ [] = refl
+subsub-fullʳ (false ∷ s) = false ∷_ =$= subsub-fullʳ s
+subsub-fullʳ (true ∷ s) = true ∷_ =$= subsub-fullʳ s
 
-subSub-full : ∀ s → subSub {n} s (full ∣ s ∣) ≡ s
-subSub-full [] = refl
-subSub-full (false ∷ s) = false ∷_ =$= (subSub-full s)
-subSub-full (true ∷ s) = true ∷_ =$= (subSub-full s)
--- subSub-full {suc _} s zero with head s
--- ... | false = refl
--- ... | true = refl
--- subSub-full {suc _} s (suc i) with head s
--- ... | false = subSub-full (tail s) i 
--- ... | true = subSub-full (tail s) i
+subsub⊂s : (s : CSet k l) (t : CSet l m) → subsub s t ⊂ s
+subsub⊂s [] [] = []
+subsub⊂s (false ∷ s) t = b≤b ∷ subsub⊂s s t
+subsub⊂s (true ∷ s) (b ∷ t) = b≤true ∷ subsub⊂s s t
 
--- subSub∘subSub : ∀ (s : Subset n) t u → subSub (subSub s t) u ≗ subSub s (subSub t (vecCast (∣∣∘subSub s t) u))
--- subSub∘subSub {suc _} s t u zero with head s
--- ... | false = refl
--- ... | true with head t
--- ... | false = refl
--- ... | true = refl
--- subSub∘subSub {suc _} s t u (suc i) with head s
--- ... | false = subSub∘subSub (tail s) t u i
--- ... | true with head t
--- ... | false = subSub∘subSub (tail s) (tail t) u i
--- ... | true = subSub∘subSub (tail s) (tail t) (tail u) i
+except⊂s : ∀ (s : CSet k l) i → except s i ⊂ s
+except⊂s s i = subsub⊂s s (antisingle i)
 
--- embed-subSub : ∀ (s : Subset n) {u v} u⊆v → embed (subSub-⊆ s u⊆v) ≗ tsac (∣∣∘subSub s v) ∘ embed u⊆v ∘ cast (∣∣∘subSub s u)
--- embed-subSub {suc _} s {u} {v} u⊆v with head s
--- ... | false = embed-subSub (tail s) u⊆v
--- ... | true with head u | head v | u⊆v zero
--- ... | false | false | _ = embed-subSub (tail s) (tail-⊆ u⊆v)
--- ... | false | true | _ = λ i → suc =$= embed-subSub (tail s) (tail-⊆ u⊆v) i
--- ... | true | true | _ = λ where
---   zero → refl
---   (suc i) → suc =$= embed-subSub (tail s) (tail-⊆ u⊆v) i
+embed-refl : (s : CSet k l) → embed (⊂-refl {s = s}) ≗ id
+embed-refl [] _ = refl
+embed-refl (false ∷ s) = embed-refl s
+embed-refl (true ∷ s) zero = refl
+embed-refl (true ∷ s) (suc i) = suc =$= (embed-refl s i)
 
-⊆-except : {s t : Subset n} → s ⊆ t → s ≡ t ⊎ Σ _ λ i → s ⊆ except t i
-⊆-except [] = inj₁ refl
-⊆-except (b≤b {false} ∷ s⊆t) with ⊆-except s⊆t
-... | inj₁ s≡t = inj₁ (false ∷_ =$= s≡t)
-... | inj₂ (i , s⊆except) = inj₂ (i , (b≤b ∷ s⊆except))
-⊆-except (b≤b {true} ∷ s⊆t) with ⊆-except s⊆t
-... | inj₁ s≡t = inj₁ (true ∷_ =$= s≡t)
-... | inj₂ (i , s⊆except) = inj₂ (suc i , b≤b ∷ s⊆except)
-⊆-except (f≤t ∷ s⊆t) = inj₂ (zero , (b≤b ∷ pser (_ ⊆_) (subSub-full _) s⊆t))
+embed-subsub-full : (s : CSet k l) → embed (subsub⊂s s (full l)) ≗ id
+embed-subsub-full [] _ = refl
+embed-subsub-full (false ∷ s) = embed-subsub-full s
+embed-subsub-full (true ∷ s) zero = refl
+embed-subsub-full (true ∷ s) (suc i) = suc =$= (embed-subsub-full s i)
 
-except⊆s : ∀ (s : Subset n) i → except s i ⊆ s
-except⊆s s i = subSub⊆s s (antisingle i)
-
-embed∘except : ∀ (s : Subset n) i → embed (except⊆s s i) ≗ punchIn' i ∘ Fin.cast (∣∣∘except s i)
-embed∘except (false ∷ s) = embed∘except s
-embed∘except (true ∷ []) zero ()
-embed∘except (true ∷ false ∷ s) zero j = embed∘except (true ∷ s) zero j
-embed∘except (true ∷ true ∷ s) zero zero = refl
-embed∘except (true ∷ true ∷ []) zero (suc ())
-embed∘except (true ∷ true ∷ false ∷ s) zero (suc j) = embed∘except (true ∷ true ∷ s) zero (suc j)
-embed∘except (true ∷ true ∷ true ∷ s) zero (suc zero) = refl
-embed∘except (true ∷ true ∷ true ∷ s) zero (suc j) = suc =$= (embed∘except (true ∷ true ∷ s) zero j)
-embed∘except (true ∷ false ∷ s) (suc i) j = embed∘except (true ∷ s) (suc i) j
-embed∘except (true ∷ true ∷ s) (suc i) zero = refl
-embed∘except (true ∷ true ∷ s) (suc i) (suc j) = suc =$= (embed∘except (true ∷ s) i j)
+embed-except : ∀ (s : CSet k l) i → embed (except⊂s s i) ≗ punchIn' i
+embed-except (false ∷ s) = embed-except s
+embed-except (true ∷ s) zero zero = suc =$= (embed-subsub-full s zero)
+embed-except (true ∷ s) zero (suc j) = suc =$= (embed-subsub-full s (suc j))
+embed-except (true ∷ s) (suc i) zero = refl
+embed-except (true ∷ s) (suc i) (suc j) = suc =$= (embed-except s i j)
 
 ⊆-Cat : ℕ → Category 0ℓ 0ℓ 0ℓ
 ⊆-Cat n = Preorder (_⊆_ {n}) ⊆-refl ⊆-trans
 
-∣∣-functor : Functor (⊆-Cat n) ℕₚ.≤-Cat
-∣∣-functor .obj = ∣_∣
-∣∣-functor .hom .func = ∣∣-⊆
-∣∣-functor .hom .cong _ = tt
-∣∣-functor .mor-∘ _ _ = tt
-∣∣-functor .mor-id = tt
+proj₁-functor : Functor (⊆-Cat n) ℕₚ.≤-Cat
+proj₁-functor .obj = proj₁
+proj₁-functor .hom .func = ⊂⇒≤
+proj₁-functor .hom .cong _ = tt
+proj₁-functor .mor-∘ _ _ = tt
+proj₁-functor .mor-id = tt
 
 ⊆?-functor : Functor (Op (⊆-Cat n)) (FunCat (⊆-Cat n) Boolₚ.≤-Cat)
 ⊆?-functor .obj s .obj = s ⊆?_
@@ -332,7 +275,7 @@ embed∘except (true ∷ true ∷ s) (suc i) (suc j) = suc =$= (embed∘except (
 -- ∪-functorˡ s = record
 --   { obj = _∪ s
 --   ; hom = record
---     { func = flip ∪-⊆ ⊆-refl
+--     { func = flip ∪-⊂ ⊆-refl
 --     ; cong = λ _ → tt
 --     }
 --   ; mor-∘ = λ _ _ → tt
@@ -343,7 +286,7 @@ embed∘except (true ∷ true ∷ s) (suc i) (suc j) = suc =$= (embed∘except (
 -- ∪-functorʳ s = record
 --   { obj = s ∪_
 --   ; hom = record
---     { func = ∪-⊆ ⊆-refl
+--     { func = ∪-⊂ ⊆-refl
 --     ; cong = λ _ → tt
 --     }
 --   ; mor-∘ = λ _ _ → tt
@@ -351,8 +294,8 @@ embed∘except (true ∷ true ∷ s) (suc i) (suc j) = suc =$= (embed∘except (
 --   }
 
 image-functor : (Fin m → Fin n) → Functor (⊆-Cat m) (⊆-Cat n)
-image-functor f .obj = image f
-image-functor f .hom .func = image-⊆ f
+image-functor f .obj s = image f (proj₂ s)
+image-functor f .hom .func = image-⊂ f
 image-functor f .hom .cong _ = tt
 image-functor f .mor-∘ _ _ = tt
 image-functor f .mor-id = tt

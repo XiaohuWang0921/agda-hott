@@ -19,6 +19,7 @@ open import Category.FunCat
 open import Data.Vec.Base
 open import Relation.Core
 open import Level
+open import Data.Product.Base
 
 record ASC (n : ℕ) : Set where
   field
@@ -37,7 +38,7 @@ record ASC (n : ℕ) : Set where
   Has-⊆ s⊆t = T-≤ (has-⊆ s⊆t)
 
   field
-    hasAllPoints : ∀ i → Has (single i)
+    hasAllPoints : ∀ s → Has (1 , s)
 
 open ASC public
 
@@ -46,26 +47,26 @@ _∈_ : ∀ {n} → Subset n → ASC n → Set
 _∈_ = flip Has
 
 points : ∀ n → ASC n
-points _ .revMap = ≤?-functorˡ 1 ∘ Opposite ∣∣-functor
-points _ .hasAllPoints i = resp (λ m → T (m ≤? 1)) (sym (∣∣∘single i)) tt
+points _ .revMap = ≤?-functorˡ 1 ∘ Opposite proj₁-functor
+points _ .hasAllPoints _ = tt
 
 all : ∀ n → ASC n
 all _ .revMap = Const <$> true
 all _ .hasAllPoints _ = tt
 
 cycle : ∀ n → ASC (2 + n)
-cycle n .revMap = ≤?-functorˡ (1 + n) ∘ Opposite ∣∣-functor
-cycle n .hasAllPoints i = resp (λ m → T (m ≤? 1 + n)) (sym (∣∣∘single i)) tt
+cycle n .revMap = ≤?-functorˡ (1 + n) ∘ Opposite proj₁-functor
+cycle n .hasAllPoints _ = tt
 
 preimages : ∀ {m n} → (Fin m → Fin n) → ASC n → ASC m
 preimages f asc .revMap = asc .revMap ∘ Opposite (image-functor f)
-preimages f asc .hasAllPoints i = Has-⊆ asc (≡⇒⊆ (image-single f i)) (asc .hasAllPoints (f i))
+preimages f asc .hasAllPoints s rewrite l≡1 s refl .proj₂ rewrite image-single f (l≡1 s refl .proj₁) = asc .hasAllPoints _
 
-add : ∀ {n} → Subset n → ASC n → ASC n
-add s asc .revMap = ∨-functor ∘ asc .revMap ˢ ⊆?-functorˡ s
-add _ asc .hasAllPoints i = T-≤ a≤a∨b (asc .hasAllPoints i)
+add : ∀ {k l} → CSet k l → ASC k → ASC k
+add s asc .revMap = ∨-functor ∘ asc .revMap ˢ ⊆?-functorˡ (_ , s)
+add _ asc .hasAllPoints s = T-≤ a≤a∨b (asc .hasAllPoints s)
 
-addAll : ∀ {m n} → (Fin m → Subset n) → ASC n → ASC n
+addAll : ∀ {m k l} → (Fin m → CSet k l) → ASC k → ASC k
 addAll {zero} _ asc = asc
 addAll {suc _} ss asc = addAll (λ i → ss (suc i)) (add (ss zero) asc)
 
