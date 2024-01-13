@@ -43,8 +43,8 @@ record ASC (n : ℕ) : Set where
 open ASC public
 
 infix 0 _∈_
-_∈_ : ∀ {n} → Subset n → ASC n → Set
-_∈_ = flip Has
+_∈_ : ∀ {k l} → CSet k l → ASC k → Set
+s ∈ asc = Has asc (_ , s)
 
 points : ∀ n → ASC n
 points _ .revMap = ≤?-functorˡ 1 ∘ Opposite proj₁-functor
@@ -72,8 +72,8 @@ addAll {suc _} ss asc = addAll (λ i → ss (suc i)) (add (ss zero) asc)
 
 infix 4 _⊑_
 _⊑_ : ∀ {n} → Rel (ASC n) 0ℓ
-a ⊑ b = ∀ s → has a s ≤ has b s
+a ⊑ b = ∀ {l} s → has a (l , s) ≤ has b (l , s)
 
 infix 4 _≅_
 _≅_ : ∀ {n} → Rel (ASC n) 0ℓ
-a ≅ b = has a ≗ has b
+a ≅ b = ∀ {l} s → has a (l , s) ≡ has b (l , s)

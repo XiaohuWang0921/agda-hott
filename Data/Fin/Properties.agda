@@ -105,6 +105,9 @@ private
 zero≢suc : {i : Fin n} → zero ≢ suc i
 zero≢suc ()
 
+Fin-suc : Fin n → Σ ℕ ((n ≡_) ∘ suc)
+Fin-suc {suc _} _ = _ , refl
+
 suc-injective : {i j : Fin n} → Fin.suc i ≡ suc j → i ≡ j
 suc-injective refl = refl
 

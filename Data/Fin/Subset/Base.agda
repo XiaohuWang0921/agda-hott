@@ -21,6 +21,10 @@ inc : Bool → Op₁ ℕ
 inc false = id
 inc true = suc
 
+finc : ∀ b → Fin k → Fin (inc b k)
+finc false = id
+finc true = suc
+
 infixr 5 _∷_
 data CSet : ℕ → ℕ → Set where
   [] : CSet 0 0

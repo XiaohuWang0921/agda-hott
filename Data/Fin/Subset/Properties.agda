@@ -23,6 +23,7 @@ open import Data.Empty.Base
 open import Data.Product.Base
 import Relation.Reasoning
 open import Data.Sum.Base as Sum
+open import Data.Fin.Properties
 
 private
   variable
@@ -223,7 +224,7 @@ subsub⊂s (false ∷ s) t = b≤b ∷ subsub⊂s s t
 subsub⊂s (true ∷ s) (b ∷ t) = b≤true ∷ subsub⊂s s t
 
 except⊂s : ∀ (s : CSet k l) i → except s i ⊂ s
-except⊂s s i = subsub⊂s s (antisingle i)
+except⊂s {l = suc _} s i = subsub⊂s s (antisingle i)
 
 embed-refl : (s : CSet k l) → embed (⊂-refl {s = s}) ≗ id
 embed-refl [] _ = refl
@@ -237,12 +238,30 @@ embed-subsub-full (false ∷ s) = embed-subsub-full s
 embed-subsub-full (true ∷ s) zero = refl
 embed-subsub-full (true ∷ s) (suc i) = suc =$= (embed-subsub-full s i)
 
-embed-except : ∀ (s : CSet k l) i → embed (except⊂s s i) ≗ punchIn' i
-embed-except (false ∷ s) = embed-except s
-embed-except (true ∷ s) zero zero = suc =$= (embed-subsub-full s zero)
-embed-except (true ∷ s) zero (suc j) = suc =$= (embed-subsub-full s (suc j))
-embed-except (true ∷ s) (suc i) zero = refl
-embed-except (true ∷ s) (suc i) (suc j) = suc =$= (embed-except s i j)
+embed-except : ∀ (s : CSet k l) (l≡m : l ≡ m) i → embed (except⊂s (resp (CSet k) l≡m s) i) ≗ punchIn' i
+embed-except {m = suc _} (false ∷ s) refl = embed-except s refl
+embed-except (true ∷ s) refl zero zero = suc =$= embed-subsub-full s zero
+embed-except (true ∷ s) refl zero (suc j) = suc =$= embed-subsub-full s (suc j)
+embed-except (true ∷ s) refl (suc i) zero = refl
+embed-except (true ∷ s) refl (suc i) (suc j) = suc =$= embed-except s refl i j
+
+except-except : ∀ (s : CSet k l) (l≡m+1 : l ≡ suc m) i j → except (except (resp (CSet k) l≡m+1 s) i) j ≡ except (except (resp (CSet k) l≡m+1 s) (punchIn i j)) (pinch j i)
+except-except (false ∷ s) refl i j = false ∷_ =$= (except-except s refl i j)
+except-except {m = suc _} (true ∷ s) refl zero j = false ∷_ =$= trans (flip subsub _ =$= subsub-fullʳ s) (sym (subsub-fullʳ _))
+except-except {m = suc _} (true ∷ s) refl (suc i) zero = false ∷_ =$= trans (subsub-fullʳ _) (sym (flip subsub _ =$= (subsub-fullʳ s)))
+except-except {m = suc (suc _)} (true ∷ s) refl (suc i) (suc j) = true ∷_ =$= (except-except s refl i j)
+
+⊂-except : {s : CSet k l} {t : CSet k m} → s ⊂ t → m ≡ n → Σ (l ≡ m) ((_≡ t) ∘ flip (resp (CSet k)) s) ⊎ Σ (Fin m) ((s ⊂_) ∘ except t)
+⊂-except [] refl = inj₁ (refl , refl)
+⊂-except (b≤b {false} ∷ s⊂t) refl with ⊂-except s⊂t refl
+... | inj₁ (refl , refl) = inj₁ (refl , refl)
+... | inj₂ (i , s⊂except) = inj₂ (i , b≤b ∷ s⊂except)
+⊂-except {n = 1} (b≤b {true} ∷ s⊂t) refl with ⊂-except s⊂t refl
+... | inj₁ (refl , refl) = inj₁ (refl , refl)
+⊂-except {n = suc (suc _)} (b≤b {true} ∷ s⊂t) refl with ⊂-except s⊂t refl
+... | inj₁ (refl , refl) = inj₁ (refl , refl)
+... | inj₂ (i , s⊂except) = inj₂ (suc i , b≤b ∷ s⊂except)
+⊂-except (f≤t ∷ s⊂t) refl = inj₂ (zero , b≤b ∷ pser (_ ⊂_) (subsub-fullʳ _) s⊂t)
 
 ⊆-Cat : ℕ → Category 0ℓ 0ℓ 0ℓ
 ⊆-Cat n = Preorder (_⊆_ {n}) ⊆-refl ⊆-trans
