@@ -54,6 +54,36 @@ restrict b c b⊑c sc .compat t∈b s⊂t =
   where open Relation.Reasoning (P._≃_)
         open Equiv (refl (P.Space _)) (trig (P.Space _))
 
+module Extend (fillable : ∀ n → Fillable P n) (asc : ASC (suc k)) (s : CSet (suc k) (suc (suc l))) (extendAll : (ss : Fin (suc (suc l)) → CSet (suc k) (suc l)) → SC asc → SC (addAll ss asc)) (sc : SC asc) where
+
+  faces : SC (addAll (except s) asc)
+  faces = extendAll (except s) sc
+
+  cycl : Cycle P l
+  cycl .face i = faces .for (∈-addAll (except s) asc i)
+  cycl .compatible i j =
+    P.proj (punchIn i) (cycl .face j) ≈˘⟨ P.map-cong (embed-except (except s j) Eq.refl _) _ ⟩
+    P.proj (embed (except⊂s (except s j) i)) (cycl .face j) ≡⟨⟩
+    P.proj (embed (except⊂s (except s j) i)) (faces .for (∈-addAll (except s) asc j)) ≈˘⟨ faces .compat (∈-addAll (except s) asc _) _ ⟩
+    faces .for (Has-⊆ (addAll (except s) asc) (except⊂s (except s j) i) (∈-addAll (except s) asc j)) ≡˘⟨ for-resp faces _ _ ⟩
+    faces .for (resp (_∈ addAll (except s) asc) (except-except s Eq.refl j i) (Has-⊆ (addAll (except s) asc) (except⊂s (except s j) i) (∈-addAll (except s) asc j))) ≡⟨ faces .for =$= T-irrel ⟩
+    faces .for (Has-⊆ (addAll (except s) asc) (except⊂s (except s (punchIn j i)) (pinch i j)) (∈-addAll (except s) asc (punchIn j i))) ≈⟨ faces .compat _ _ ⟩
+    P.proj (embed (except⊂s (except s (punchIn j i)) (pinch i j))) (faces .for (∈-addAll (except s) asc (punchIn j i))) ≡⟨⟩
+    P.proj (embed (except⊂s (except s (punchIn j i)) (pinch i j))) (cycl .face (punchIn j i)) ≈⟨ P.map-cong (embed-except (except s (punchIn j i)) Eq.refl _) _ ⟩
+    P.proj (punchIn (pinch i j)) (cycl .face (punchIn j i)) ∎
+    where open Relation.Reasoning (P._≃_)
+          open Equiv (refl (P.Space _)) (trig (P.Space _))
+
+  result : SC (add s asc)
+  result .for {s = t} t∈added = add-⊂ {s = t} {s} {asc} t∈added |>
+    < (λ t⊂s → ⊂-except t⊂s _≡_.refl |>
+      λ where
+        (inj₂ (i , t⊂except)) → faces .for (Has-⊆ (addAll (except s) asc) t⊂except (∈-addAll (except s) asc i))
+        (inj₁ (Eq.refl , Eq.refl)) → fill (fillable l) ⟨$⟩ cycl)
+    ⊹ (λ t∈asc → sc .for t∈asc)
+    >
+  result .compat = {!!}
+
 module Fill (fillable : ∀ n → Fillable P n) where
 
   extend : ∀ asc (s : CSet (suc k) l) → SC asc → SC (add s asc)
@@ -67,35 +97,7 @@ module Fill (fillable : ∀ n → Fillable P n) where
     if (has asc (_ , s))
     then (λ s∈asc → restrict (add s asc) asc (add-∈ asc s∈asc))
     else λ _ → result (extendAll asc)
-    module Extend where
-
-      faces : ((ss : Fin (suc (suc l)) → CSet (suc k) (suc l)) → SC asc → SC (addAll ss asc)) → SC asc → SC (addAll (except s) asc)
-      faces ea = ea (except s)
-
-      cycl : ((ss : Fin (suc (suc l)) → CSet (suc k) (suc l)) → SC asc → SC (addAll ss asc)) → SC asc → Cycle P l
-      cycl ea sc .face i = faces ea sc .for (∈-addAll (except s) asc i)
-      cycl ea sc .compatible i j =
-        P.proj (punchIn i) (cycl ea sc .face j) ≈˘⟨ P.map-cong (embed-except (except s j) Eq.refl _) _ ⟩
-        P.proj (embed (except⊂s (except s j) i)) (cycl ea sc .face j) ≡⟨⟩
-        P.proj (embed (except⊂s (except s j) i)) (faces ea sc .for (∈-addAll (except s) asc j)) ≈˘⟨ faces ea sc .compat (∈-addAll (except s) asc _) _ ⟩
-        faces ea sc .for (Has-⊆ (addAll (except s) asc) (except⊂s (except s j) i) (∈-addAll (except s) asc j)) ≡˘⟨ for-resp (faces ea sc) _ _ ⟩
-        faces ea sc .for (resp (_∈ addAll (except s) asc) (except-except s Eq.refl j i) (Has-⊆ (addAll (except s) asc) (except⊂s (except s j) i) (∈-addAll (except s) asc j))) ≡⟨ faces ea sc .for =$= T-irrel ⟩
-        faces ea sc .for (Has-⊆ (addAll (except s) asc) (except⊂s (except s (punchIn j i)) (pinch i j)) (∈-addAll (except s) asc (punchIn j i))) ≈⟨ faces ea sc .compat _ _ ⟩
-        P.proj (embed (except⊂s (except s (punchIn j i)) (pinch i j))) (faces ea sc .for (∈-addAll (except s) asc (punchIn j i))) ≡⟨⟩
-        P.proj (embed (except⊂s (except s (punchIn j i)) (pinch i j))) (cycl ea sc .face (punchIn j i)) ≈⟨ P.map-cong (embed-except (except s (punchIn j i)) Eq.refl _) _ ⟩
-        P.proj (punchIn (pinch i j)) (cycl ea sc .face (punchIn j i)) ∎
-        where open Relation.Reasoning (P._≃_)
-              open Equiv (refl (P.Space _)) (trig (P.Space _))
-
-      result : ((ss : Fin (suc (suc l)) → CSet (suc k) (suc l)) → SC asc → SC (addAll ss asc)) → SC asc → SC (add s asc)
-      result ea sc .for {s = t} t∈added = add-⊂ {s = t} {s} {asc} t∈added |>
-        < (λ t⊂s → ⊂-except t⊂s _≡_.refl |>
-          λ where
-            (inj₂ (i , t⊂except)) → faces ea sc .for (Has-⊆ (addAll (except s) asc) t⊂except (∈-addAll (except s) asc i))
-            (inj₁ (Eq.refl , Eq.refl)) → {!!})
-        ⊹ (λ t∈asc → sc .for t∈asc)
-        >
-      result ea sc .compat = {!!}
+    where open Extend fillable asc s
   -- extend {k = k} {l = suc (suc l)} asc s with has asc (_ , s) in eq
   -- ... | true = restrict (add s asc) asc (add-∈ asc (pser T eq tt))
   -- ... | false = result
