@@ -13,10 +13,6 @@ open import Universe.Set
 infixr 5 _∨_
 infixr 6 _∧_
 
-if_then_else_ : ∀ {ℓ} {A : Set ℓ} → Bool → A → A → A
-if false then _ else f = f
-if true then t else _ = t
-
 _∨_ : Op₂ Bool
 false ∨ b = b
 true ∨ _ = true
@@ -39,6 +35,14 @@ _Deflects_ = _Reflects_ ∘ not
 T : Bool → Set
 T false = ⊥
 T true = ⊤
+
+F : Bool → Set
+F false = ⊤
+F true = ⊥
+
+if_then_else_ : ∀ {ℓ} {A : Set ℓ} b → (T b → A) → (F b → A) → A
+if false then _ else f = f tt
+if true then t else _ = t tt
 
 infixr 4 _≤?_ _≟_ _≤_
 
