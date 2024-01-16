@@ -93,8 +93,14 @@ module Fill (fillable : ∀ n → Fillable P n) where
   --   ... | inj₁ u⊂s = {!!}
 
   extend : ∀ asc (s : CSet (suc k) l) → SC asc → SC (add s asc)
+
   extendAll : ∀ asc (ss : Fin m → CSet (suc k) l) → SC asc → SC (addAll ss asc)
-  
+  extendAll {zero} _ _ sc = sc
+  extendAll {suc _} asc ss sc =
+    let head-ss = ss zero
+        tail-ss i = ss (suc i)
+    in extendAll (add head-ss asc) tail-ss (extend asc head-ss sc)
+
   extend {l = 0} asc s rewrite l≡0 s Eq.refl =
     let e = empty _
     in restrict (add e asc) asc (add-∈ asc (empty∈asc asc))
@@ -134,8 +140,3 @@ module Fill (fillable : ∀ n → Fillable P n) where
   --     ... | inj₂ (i , t⊂except) = {!!}
   --     ... | inj₁ (Eq.refl , Eq.refl) = {!!}
   --     result sc .compat = {!!} 
-  extendAll {zero} _ _ sc = sc
-  extendAll {suc _} asc ss sc =
-    let head-ss = ss zero
-        tail-ss i = ss (suc i)
-    in extendAll (add head-ss asc) tail-ss (extend asc head-ss sc)
