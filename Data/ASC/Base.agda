@@ -42,9 +42,12 @@ record ASC (n : ℕ) : Set where
 
 open ASC public
 
-infix 0 _∈_
+infix 0 _∈_ _∉_
 _∈_ : ∀ {k l} → CSet k l → ASC k → Set
 s ∈ asc = Has asc (_ , s)
+
+_∉_ : ∀ {k l} → CSet k l → ASC k → Set
+s ∉ asc = F (has asc (_ , s))
 
 points : ∀ n → ASC n
 points _ .revMap = ≤?-functorˡ 1 ∘ Opposite proj₁-functor
