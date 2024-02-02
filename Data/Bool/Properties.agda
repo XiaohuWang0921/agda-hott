@@ -48,6 +48,16 @@ Reflects-false : ∀ {ℓ} {P : Set ℓ} b → b Reflects P → (P → ⊥) → 
 Reflects-false false _ _ = refl
 Reflects-false true p ¬p = ⊥-elim (¬p p)
 
+T-F : T b → F b → ⊥
+T-F {false} ()
+T-F {true} _ ()
+
+if-T : ∀ {p} {P : Set p} {then : T b → P} {else : F b → P} (t : T b) → if b then then else else ≡ then t
+if-T {true} tt = refl
+
+if-F : ∀ {p} {P : Set p} {then : T b → P} {else : F b → P} (f : F b) → if b then then else else ≡ else f
+if-F {false} tt = refl
+
 b≤true : b ≤ true
 b≤true {false} = f≤t
 b≤true {true} = b≤b
