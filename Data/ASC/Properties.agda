@@ -76,6 +76,9 @@ addAll-⊑ : ∀ {ss : Fin m → CSet k l} {a b} → (∀ i → ss i ∈ b) → 
 addAll-⊑ {zero} _ a⊑b = a⊑b
 addAll-⊑ {suc _} {a = a} {b} ∀ss∈b a⊑b = addAll-⊑ {b = b} (λ i → ∀ss∈b (suc i)) (add-⊑ {a = a} {b = b} (∀ss∈b zero) a⊑b)
 
+add-⊂-⊑ : ∀ {s : CSet k l} {t : CSet k m} {a b} → s ⊂ t → a ⊑ b → add s a ⊑ add t b
+add-⊂-⊑ s⊂t a⊑b u = ∨-≤ (a⊑b u) (⊂?-⊂ {s = u} ⊂-refl s⊂t)
+
 empty∈asc : (asc : ASC (suc n)) → empty _ ∈ asc
 empty∈asc asc = Has-⊆ asc empty⊂s (asc .hasAllPoints (single zero))
 
