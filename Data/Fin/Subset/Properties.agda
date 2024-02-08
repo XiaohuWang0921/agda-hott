@@ -232,6 +232,14 @@ embed-refl (false ∷ s) = embed-refl s
 embed-refl (true ∷ s) zero = refl
 embed-refl (true ∷ s) (suc i) = suc =$= (embed-refl s i)
 
+embed-trans : {s : CSet k l} {t : CSet k m} {u : CSet k n} (s⊂t : s ⊂ t) (t⊂u : t ⊂ u) → embed (⊂-trans s⊂t t⊂u) ≗ embed t⊂u ∘ embed s⊂t
+embed-trans [] [] _ = refl
+embed-trans (b≤b {false} ∷ s⊂t) (b≤b ∷ t⊂u) = embed-trans s⊂t t⊂u
+embed-trans (b≤b {false} ∷ s⊂t) (f≤t ∷ t⊂u) i = suc =$= embed-trans s⊂t t⊂u i
+embed-trans (b≤b {true} ∷ s⊂t) (b≤b ∷ t⊂u) zero = refl
+embed-trans (b≤b {true} ∷ s⊂t) (b≤b ∷ t⊂u) (suc i) = suc =$= embed-trans s⊂t t⊂u i
+embed-trans (f≤t ∷ s⊂t) (b≤b ∷ t⊂u) i = suc =$= embed-trans s⊂t t⊂u i
+
 embed-subsub-full : (s : CSet k l) → embed (subsub⊂s s (full l)) ≗ id
 embed-subsub-full [] _ = refl
 embed-subsub-full (false ∷ s) = embed-subsub-full s

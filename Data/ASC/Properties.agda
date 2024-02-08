@@ -82,5 +82,8 @@ add-⊂-⊑ s⊂t a⊑b u = ∨-≤ (a⊑b u) (⊂?-⊂ {s = u} ⊂-refl s⊂t)
 empty∈asc : (asc : ASC (suc n)) → empty _ ∈ asc
 empty∈asc asc = Has-⊆ asc empty⊂s (asc .hasAllPoints (single zero))
 
+l≡0⇒s∈asc : (s : CSet (suc n) 0) (asc : ASC (suc n)) → s ∈ asc
+l≡0⇒s∈asc s rewrite l≡0 s refl = empty∈asc
+
 add-∈ : ∀ {s : CSet k l} asc → s ∈ asc → add s asc ⊑ asc
 add-∈ asc s∈asc = add-⊑ {a = asc} {b = asc} s∈asc (⊑-refl {a = asc})
