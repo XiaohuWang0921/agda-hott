@@ -19,8 +19,8 @@ open import Category.Natural hiding (id; _∘_)
 zero≢suc : ∀ {n} → zero ≢ suc n
 zero≢suc ()
 
-suc-injective : ∀ {m n} → suc m ≡ suc n → m ≡ n
-suc-injective refl = refl
+suc-monic : IsMonic suc
+suc-monic refl = refl
 
 pred≤pred : ∀ {m n} → suc m ≤ suc n → m ≤ n
 pred≤pred (s≤s m≤n) = m≤n
@@ -57,7 +57,7 @@ pred≤pred (s≤s m≤n) = m≤n
 ≟-Reflects-≡ zero (suc _) = zero≢suc
 ≟-Reflects-≡ (suc _) zero = zero≢suc ∘ sym
 ≟-Reflects-≡ (suc m) (suc n) with m ≟ n | ≟-Reflects-≡ m n
-... | false | m≢n = m≢n ∘ suc-injective
+... | false | m≢n = m≢n ∘ suc-monic
 ... | true  | m≡n = suc =$= m≡n
 
 ≤-refl : ∀ {n} → n ≤ n

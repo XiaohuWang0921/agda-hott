@@ -19,14 +19,6 @@ open import Relation.Reasoning.Set
 open import Category.FunCat
 open import Universe.Setoid using (func; cong)
 
-cast≗iresp : ∀ {m n} (m≡n : m ≡ n) → cast m≡n ≗ iresp m≡n
-cast≗iresp refl zero = refl
-cast≗iresp refl (suc i) = suc =$= cast≗iresp refl i
-
-tsac≗ipser : ∀ {m n} (m≡n : m ≡ n) → tsac m≡n ≗ ipser m≡n
-tsac≗ipser refl zero = refl
-tsac≗ipser refl (suc i) = suc =$= tsac≗ipser refl i
-
 splitAt∘inj+ : ∀ {m} n → splitAt m ∘ inj+ n ≗ inj₁
 splitAt∘inj+ _ zero = refl
 splitAt∘inj+ n (suc i) = Sum.map suc id =$= splitAt∘inj+ n i
@@ -108,15 +100,15 @@ zero≢suc ()
 Fin-suc : Fin n → Σ ℕ ((n ≡_) ∘ suc)
 Fin-suc {suc _} _ = _ , refl
 
-suc-injective : {i j : Fin n} → Fin.suc i ≡ suc j → i ≡ j
-suc-injective refl = refl
+suc-monic : IsMonic (Fin.suc {n})
+suc-monic refl = refl
 
 ≟-Reflects-≡ : (i j : Fin n) → (i ≟ j) Reflects (i ≡ j)
 ≟-Reflects-≡ zero zero = refl
 ≟-Reflects-≡ zero (suc _) = zero≢suc
 ≟-Reflects-≡ (suc _) zero = zero≢suc ∘ sym
 ≟-Reflects-≡ (suc i) (suc j) with i ≟ j | ≟-Reflects-≡ i j
-... | false | i≢j = i≢j ∘ suc-injective
+... | false | i≢j = i≢j ∘ suc-monic
 ... | true  | i≡j = suc =$= i≡j
 
 ++-cong : {f g : Fin l → Fin n} {h i : Fin m → Fin n} → f ≗ g → h ≗ i → f ++ h ≗ g ++ i
@@ -236,20 +228,20 @@ extract-naturalʳ : ∀ n → *-functorʳ n ⇉ Id
 extract-naturalʳ m .at _ = proj₂ ∘ extract m
 extract-naturalʳ m .isNatural _ i = proj₂ =$= extract∘combine (proj₁ (extract m i)) _
 
-punchIn-injective : ∀ i (j k : Fin n) → punchIn i j ≡ punchIn i k → j ≡ k
-punchIn-injective {suc _} zero _ _ sj≡sk = suc-injective sj≡sk
-punchIn-injective (suc _) zero zero _ = refl
-punchIn-injective (suc _) zero (suc _) 0≡s = (λ ()) $ 0≡s
-punchIn-injective (suc _) (suc _) zero s≡0 = (λ ()) $ s≡0
-punchIn-injective (suc i) (suc j) (suc k) eq = suc =$= punchIn-injective i j k (suc-injective eq)
+punchIn-monic : ∀ i (j k : Fin n) → punchIn i j ≡ punchIn i k → j ≡ k
+punchIn-monic {suc _} zero _ _ sj≡sk = suc-monic sj≡sk
+punchIn-monic (suc _) zero zero _ = refl
+punchIn-monic (suc _) zero (suc _) 0≡s = (λ ()) $ 0≡s
+punchIn-monic (suc _) (suc _) zero s≡0 = (λ ()) $ s≡0
+punchIn-monic (suc i) (suc j) (suc k) eq = suc =$= punchIn-monic i j k (suc-monic eq)
 
 punchIn-≢ : ∀ i (j : Fin n) → i ≢ punchIn i j
 punchIn-≢ {suc _} zero _ ()
 punchIn-≢ (suc _) zero ()
-punchIn-≢ (suc i) (suc j) eq = punchIn-≢ i j (suc-injective eq)
+punchIn-≢ (suc i) (suc j) eq = punchIn-≢ i j (suc-monic eq)
 
 -- punchOut∘punchIn : ∀ i (j : Fin n) → punchOut (punchIn-≢ i j) ≡ j
--- punchOut∘punchIn i j = punchIn-injective i (punchOut (punchIn-≢ i j)) j (punchIn∘punchOut (punchIn-≢ i j))
+-- punchOut∘punchIn i j = punchIn-monic i (punchOut (punchIn-≢ i j)) j (punchIn∘punchOut (punchIn-≢ i j))
 
 punchIn∘punchIn : ∀ i (j : Fin (suc n)) → punchIn i ∘ punchIn j ≗ punchIn (punchIn i j) ∘ punchIn (pinch j i)
 punchIn∘punchIn {suc _} zero _ _ = refl

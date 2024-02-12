@@ -57,10 +57,16 @@ tabulate : (Fin k → Bool) → Subset k
 tabulate {0} _ = 0 , []
 tabulate {suc _} f = f zero ∺ tabulate (f ∘ suc)
 
-infixl 0 _∋?_
+infixl 0 _∋?_ _∋_ _∌_
 _∋?_ : CSet k l → Fin k → Bool
 b ∷ _ ∋? zero = b
 _ ∷ s ∋? suc i = s ∋? i
+
+_∋_ : CSet k l → Fin k → Set
+_∋_ = T ∘₂ _∋?_
+
+_∌_ : CSet k l → Fin k → Set
+_∌_ = F ∘₂ _∋?_
 
 infix 4 _⊂_ _⊂?_ _⊆_ _⊆?_
 
@@ -97,9 +103,9 @@ _∪_ = zipWith _∨_
 
 embed : {s : CSet k l} {t : CSet k m} → s ⊂ t → Fin l → Fin m
 embed [] = id
-embed (b≤b {false} ∷ s⊆t) = embed s⊆t
-embed (b≤b {true} ∷ s⊆t) = id ∣ embed s⊆t
-embed (f≤t ∷ s⊆t) = suc ∘ embed s⊆t
+embed (b≤b {false} ∷ s⊂t) = embed s⊂t
+embed (b≤b {true} ∷ s⊂t) = id ∣ embed s⊂t
+embed (f≤t ∷ s⊂t) = suc ∘ embed s⊂t
 
 single : Fin k → CSet k 1
 single zero = true ∷ empty _
@@ -115,7 +121,7 @@ preimage f s = tabulate ((s ∋?_) ∘ f)
 image : (Fin k → Fin l) → CSet k m → Subset l
 image _ [] = 0 , empty _
 image f (false ∷ s) = image (f ∘ suc) s
-image f (true ∷ s) = (single (f zero)) ∪ image (f ∘ suc) s .proj₂
+image f (true ∷ s) = single (f zero) ∪ image (f ∘ suc) s .proj₂
 
 subsub : CSet k l → CSet l m → CSet k m
 subsub [] t = t

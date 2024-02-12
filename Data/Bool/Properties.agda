@@ -14,6 +14,7 @@ open import Level
 open import Universe.Setoid using (func; cong)
 open import Category.FunCat
 open import Category.Natural using (_⇉_; at; isNatural)
+open import Data.Sum.Base
 
 private
   variable
@@ -40,17 +41,19 @@ id-Reflects-T true = tt
 ≟-Reflects-≡ true false = false≢true ∘ sym
 ≟-Reflects-≡ true true = refl
 
-Reflects-true : ∀ {ℓ} {P : Set ℓ} b → b Reflects P → P → b ≡ true
-Reflects-true false ¬p p = ⊥-elim (¬p p)
-Reflects-true true _ _ = refl
+T-true : T b → b ≡ true
+T-true {true} _ = refl
 
-Reflects-false : ∀ {ℓ} {P : Set ℓ} b → b Reflects P → (P → ⊥) → b ≡ false
-Reflects-false false _ _ = refl
-Reflects-false true p ¬p = ⊥-elim (¬p p)
+F-false : F b → b ≡ false
+F-false {false} _ = refl
 
 T-F : T b → F b → ⊥
 T-F {false} ()
 T-F {true} _ ()
+
+F⊎T : F b ⊎ T b
+F⊎T {false} = inj₁ tt
+F⊎T {true} = inj₂ tt
 
 if-T : ∀ {p} {P : Set p} {then : T b → P} {else : F b → P} (t : T b) → if b then then else else ≡ then t
 if-T {true} tt = refl
@@ -122,9 +125,13 @@ b∨false : b ∨ false ≡ b
 b∨false {false} = refl
 b∨false {true} = refl
 
-∨-true : b ∨ true ≡ true
-∨-true {false} = refl
-∨-true {true} = refl
+b∨true : b ∨ true ≡ true
+b∨true {false} = refl
+b∨true {true} = refl
+
+∨-comm : a ∨ b ≡ b ∨ a
+∨-comm {false} = sym b∨false
+∨-comm {true} = sym b∨true
 
 a≤a∨b : a ≤ a ∨ b
 a≤a∨b {false} = false≤b
@@ -133,6 +140,14 @@ a≤a∨b {true} = b≤b
 b≤a∨b : ∀ {b} → b ≤ a ∨ b
 b≤a∨b {false} = b≤b
 b≤a∨b {true} = b≤true
+
+b∧false : b ∧ false ≡ false
+b∧false {false} = refl
+b∧false {true} = refl
+
+b∧true : b ∧ true ≡ b
+b∧true {false} = refl
+b∧true {true} = refl
 
 eval : (a ≤? b) ≤ c ≤? d → a ≤ b → c ≤ d
 eval = Reflects-≤ (≤?-Reflects-≤ _ _) (≤?-Reflects-≤ _ _)

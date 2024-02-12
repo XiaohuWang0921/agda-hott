@@ -4,7 +4,7 @@ module Data.Fin.Subset.Properties where
 
 open import Data.Fin.Base as Fin
 open import Data.Fin.Subset.Base
-open import Data.Fin.Properties hiding (suc-injective)
+open import Data.Fin.Properties
 open import Data.Nat.Base as ℕ using (ℕ; zero; suc; 0≤n; s≤s; _∸_; _+_; pred)
 open import Universe.Set
 open import Relation.Equality.Base hiding (cong)
@@ -12,7 +12,7 @@ open import Data.Unit.Core
 open import Data.Bool.Base hiding (_≟_)
 -- open import Data.Vec.Base
 open import Data.Bool.Properties as Boolₚ
-open import Data.Nat.Properties as ℕₚ hiding (≤?-Reflects-≤; ≤?-≤; ≤-refl; ≤-antisym; ≤-trans; ≤-Cat)
+open import Data.Nat.Properties as ℕₚ hiding (≤?-Reflects-≤; ≤?-≤; ≤-refl; ≤-antisym; ≤-trans; ≤-Cat; suc-monic)
 open import Category.Base
 open import Level
 open import Category.Functor hiding (_∘_)
@@ -90,6 +90,14 @@ private
 ≡⇒⊆ : {s t : Subset n} → s ≡ t → s ⊆ t
 ≡⇒⊆ refl = ⊆-refl
 
+⊂-∋? : s ⊂ t → ∀ i → (s ∋? i) ≤ (t ∋? i)
+⊂-∋? (b≤c ∷ _) zero = b≤c
+⊂-∋? (_ ∷ s⊂t) (suc i) = ⊂-∋? s⊂t i
+
+tabulate-≤ : {f g : Fin k → Bool} → (∀ i → f i ≤ g i) → tabulate f ⊆ tabulate g
+tabulate-≤ {zero} _ = []
+tabulate-≤ {suc _} f≤g = f≤g zero ∷ tabulate-≤ λ i → f≤g (suc i)
+
 s⊂full : {s : CSet k l} → s ⊂ full k
 s⊂full {s = []} = []
 s⊂full {s = _ ∷ _} = b≤true ∷ s⊂full
@@ -134,13 +142,30 @@ k≡l+1 (true ∷ s) = mapp suc (true ∷_ =$=_) (k≡l+1 s)
 ∩-⊂ [] [] = []
 ∩-⊂ (a≤b ∷ s⊆t) (b≤c ∷ t⊆u) = (∧-≤ a≤b b≤c) ∷ (∩-⊂ s⊆t t⊆u)
 
-s∪empty : s ∪ empty k ≡ (_ , s)
-s∪empty {s = []} = refl
-s∪empty {s = _ ∷ _} = cong₂ _∺_ b∨false s∪empty
+∪-comm : s ∪ t ≡ t ∪ s
+∪-comm {s = []} {t = []} = refl
+∪-comm {s = b ∷ s} {t = c ∷ t} = cong₂ _∺_ (∨-comm {b} {c}) (∪-comm {s = s} {t = t})
+
+⊂-∪ : s ⊂ t → s ∪ t ≡ (_ , t)
+⊂-∪ [] = refl
+⊂-∪ (b≤b {b} ∷ s⊂t) rewrite ∨-idem {b} = mapp (inc b) (b ∷_) =$= ⊂-∪ s⊂t
+⊂-∪ (f≤t ∷ s⊂t) = mapp suc (true ∷_) =$= ⊂-∪ s⊂t
+
+s⊆s∪t : (_ , s) ⊆ s ∪ t
+s⊆s∪t {s = []} {t = []} = []
+s⊆s∪t {s = b ∷ s} {t = c ∷ t} = a≤a∨b ∷ s⊆s∪t
+
+t⊆s∪t : (_ , t) ⊆ s ∪ t
+t⊆s∪t {t = t} {s = s} rewrite ∪-comm {s = s} {t = t} = s⊆s∪t
+
+∪-idem : s ∪ s ≡ (_ , s)
+∪-idem = ⊂-∪ ⊂-refl
 
 empty∪s : empty n ∪ s ≡ (_ , s)
-empty∪s {s = []} = refl
-empty∪s {s = b ∷ _} = b ∺_ =$= empty∪s
+empty∪s = ⊂-∪ empty⊂s
+
+s∪empty : s ∪ empty k ≡ (_ , s)
+s∪empty = trans ∪-comm empty∪s
 
 empty∩s : empty k ∩ s ≡ (0 , empty k)
 empty∩s {s = []} = refl
@@ -149,6 +174,17 @@ empty∩s {s = _ ∷ _} = false ∺_ =$= empty∩s
 full-∩ : full k ∩ s ≡ (_ , s)
 full-∩ {s = []} = refl
 full-∩ {s = b ∷ _} = b ∺_ =$= full-∩
+
+embed-monic : (s⊂t : s ⊂ t) → IsMonic (embed s⊂t)
+embed-monic (b≤b {false} ∷ s⊂t) = embed-monic s⊂t
+embed-monic (b≤b {true} ∷ s⊂t) {zero} {zero} _ = refl
+embed-monic (b≤b {true} ∷ s⊂t) {suc i} {suc j} s≡s = suc =$= embed-monic s⊂t (suc-monic s≡s)
+embed-monic (f≤t ∷ s⊂t) s≡s = embed-monic s⊂t (suc-monic s≡s)
+
+embed-full-∋ : ∀ i → s ∋ embed {s = s} s⊂full i
+embed-full-∋ {s = false ∷ s} i = embed-full-∋ {s = s} i
+embed-full-∋ {s = true ∷ s} zero = tt
+embed-full-∋ {s = true ∷ s} (suc i) = embed-full-∋ {s = s} i
 
 -- single-cast : ∀ .(m≡n : m ≡ n) i → single (cast m≡n i) ≗ vecCast m≡n (single i)
 -- single-cast {suc _} {suc _} _ zero zero = refl
@@ -159,10 +195,22 @@ full-∩ {s = b ∷ _} = b ∺_ =$= full-∩
 -- antisingle-cast : ∀ .(m≡n : m ≡ n) i → antisingle (cast m≡n i) ≗ vecCast m≡n (antisingle i)
 -- antisingle-cast m≡n i j = not =$= single-cast m≡n i j
 
-image-cong : ∀ {f g : Fin k → Fin l} (s : CSet k m) → f ≗ g → image f s ≡ image g s
-image-cong [] _ = refl
-image-cong (false ∷ s) f≗g = image-cong s λ i → f≗g (suc i)
-image-cong (true ∷ s) f≗g rewrite (f≗g zero) rewrite image-cong s λ i → f≗g (suc i) = refl
+empty-∌ : ∀ i → empty k ∌ i
+empty-∌ zero = tt
+empty-∌ (suc i) = empty-∌ i
+
+single-∋ : (i : Fin k) → single i ∋ i
+single-∋ zero = tt
+single-∋ (suc i) = single-∋ i
+
+∋-single : ∀ (s : CSet k l) i → s ∋ i → single i ⊂ s
+∋-single (true ∷ s) zero _ = b≤b ∷ empty⊂s
+∋-single (_ ∷ s) (suc i) s∋i = false≤b ∷ ∋-single s i s∋i
+
+-- image-cong : ∀ {f g : Fin k → Fin l} (s : CSet k m) → f ≗ g → image f s ≡ image g s
+-- image-cong [] _ = refl
+-- image-cong (false ∷ s) f≗g = image-cong s λ i → f≗g (suc i)
+-- image-cong (true ∷ s) f≗g rewrite (f≗g zero) rewrite image-cong s λ i → f≗g (suc i) = refl
 
 image-⊂ : ∀ (f : Fin m → Fin n) → s ⊂ t → image f s ⊆ image f t
 image-⊂ _ [] = ⊆-refl
@@ -178,12 +226,28 @@ image-single : ∀ (f : Fin k → Fin l) i → image f (single i) ≡ (1 , singl
 image-single f zero rewrite image-empty (f ∘ suc) = s∪empty
 image-single f (suc i) = image-single (f ∘ suc) i
 
--- image-preimage : ∀ (f : Fin m → Fin n) s → image f (preimage f s) ⊆ s
--- image-preimage {zero} _ _ = empty⊂s
--- image-preimage {suc _} f s i = {!!}
+preimage-⊂ : ∀ (f : Fin m → Fin n) → s ⊂ t → preimage f s ⊆ preimage f t
+preimage-⊂ {zero} _ _ = []
+preimage-⊂ {suc _} f s⊂t = ⊂-∋? s⊂t (f zero) ∷ preimage-⊂ (f ∘ suc) s⊂t
 
--- preimage-image : ∀ (f : Fin m → Fin n) s → s ⊆ preimage f (image f s)
--- preimage-image = {!!}
+preimage-empty : (f : Fin k → Fin l) → preimage f (empty l) ≡ (0 , empty k)
+preimage-empty {zero} _ = refl
+preimage-empty {suc _} f rewrite F-false (empty-∌ (f zero)) = mapp id (false ∷_) =$= preimage-empty (f ∘ suc)
+
+image-preimage : (f : Fin k → Fin l) (s : CSet l m) → image f (preimage f s .proj₂) ⊆ (m , s)
+image-preimage {zero} _ _ = empty⊂s
+image-preimage {suc _} f s with s ∋? f zero in eq
+... | false = image-preimage (f ∘ suc) s
+... | true = ⊂-trans (∪-⊂ (∋-single s (f zero) (pser T eq tt)) (image-preimage (f ∘ suc) s)) (≡⇒⊆ ∪-idem)
+
+preimage-image : (f : Fin k → Fin l) (s : CSet k m) → (m , s) ⊆ preimage f (image f s .proj₂)
+preimage-image f [] = []
+preimage-image f (false ∷ s) = false≤b ∷ (preimage-image (f ∘ suc) s)
+preimage-image f (true ∷ s) =
+  let headf = f zero
+      tailf = f ∘ suc
+  in resp (_≤ (image f (true ∷ s) .proj₂ ∋? headf)) (T-true (single-∋ headf)) (⊂-∋? (s⊆s∪t {s = single headf}) headf) ∷
+     ⊂-trans (preimage-image tailf s) (tabulate-≤ λ i → ⊂-∋? (t⊆s∪t {t = image tailf s .proj₂} {s = single headf}) (tailf i))
 
 -- embed-irrel : {s t : Subset n} (a b : s ⊆ t) → embed a ≗ embed b
 -- embed-irrel {suc _} {s} {t} a b with s zero | t zero | a zero | b zero
@@ -321,8 +385,15 @@ proj₁-functor .mor-id = tt
 --   }
 
 image-functor : (Fin m → Fin n) → Functor (⊆-Cat m) (⊆-Cat n)
-image-functor f .obj s = image f (proj₂ s)
+image-functor f .obj s = image f (s .proj₂)
 image-functor f .hom .func = image-⊂ f
 image-functor f .hom .cong _ = tt
 image-functor f .mor-∘ _ _ = tt
 image-functor f .mor-id = tt
+
+preimage-functor : (Fin m → Fin n) → Functor (⊆-Cat n) (⊆-Cat m)
+preimage-functor f .obj s = preimage f (s .proj₂)
+preimage-functor f .hom .func = preimage-⊂ f
+preimage-functor f .hom .cong _ = tt
+preimage-functor f .mor-∘ _ _ = tt
+preimage-functor f .mor-id = tt

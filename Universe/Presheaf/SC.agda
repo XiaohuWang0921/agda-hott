@@ -4,8 +4,7 @@ open import Universe.Presheaf.Base
 
 module Universe.Presheaf.SC {a r} (P : Presheaf a r) where
 -- SC stands for Simplicial Complex
-open import Data.ASC.Base
-open import Data.ASC.Properties
+open import Data.ASC
 open import Data.Fin.Base as Fin
 open import Data.Nat.Base
 open import Data.Fin.Subset.Base

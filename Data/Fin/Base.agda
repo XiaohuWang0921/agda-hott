@@ -15,7 +15,6 @@ open import Data.Bool.Base hiding (_≟_)
 open import Relation.Core
 open import Algebra.Core
 open import Category.FunCat
-open import Data.Nat.Properties using (suc-injective)
 
 data Fin : ℕ → Set where
   zero : ∀ {n} → Fin (suc n)
@@ -26,13 +25,6 @@ FinCat = FullSub (SetCat 0ℓ) Fin
 
 FinSucCat : Category _ _ _
 FinSucCat = FullSub FinCat suc
-
-cast : ∀ {m n} → .(m ≡ n) → Fin m → Fin n
-cast {suc _} {suc _} _ zero = zero
-cast {suc _} {suc _} sm≡sn (suc i) = suc (cast (suc-injective sm≡sn) i)
-
-tsac : ∀ {m n} → .(m ≡ n) → Fin n → Fin m
-tsac m≡n = cast (sym m≡n)
 
 _≟_ : ∀ {n} → Fin n → Fin n → Bool
 zero ≟ zero = true

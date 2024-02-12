@@ -1,12 +1,12 @@
 {-# OPTIONS --without-K --safe #-}
 
-module Data.ASC.Base where
+module Data.ASC where
 -- ASC stands for abstract simplicial complex
 open import Data.Bool.Base hiding (_≤?_)
 open import Data.Fin.Base
 open import Data.Fin.Subset.Base
 open import Data.Fin.Subset.Properties
-open import Data.Nat.Base as ℕ using (ℕ; zero; suc; _+_; _≤?_)
+open import Data.Nat.Base as ℕ hiding (_≤_)
 open import Data.Bool.Properties hiding (≤?-functorˡ)
 open import Category.Base
 open import Category.Functor
@@ -36,17 +36,21 @@ record ASC (n : ℕ) : Set where
 
   Has-⊆ : ∀ {s t} → s ⊆ t → Has t → Has s
   Has-⊆ s⊆t = T-≤ (has-⊆ s⊆t)
-
+  
   field
     hasAllPoints : ∀ s → Has (1 , s)
-
+  
 open ASC public
 
+private
+  variable
+    k l m n : ℕ
+
 infix 0 _∈_ _∉_
-_∈_ : ∀ {k l} → CSet k l → ASC k → Set
+_∈_ : CSet k l → ASC k → Set
 s ∈ asc = Has asc (_ , s)
 
-_∉_ : ∀ {k l} → CSet k l → ASC k → Set
+_∉_ : CSet k l → ASC k → Set
 s ∉ asc = F (has asc (_ , s))
 
 points : ∀ n → ASC n
@@ -61,17 +65,23 @@ cycle : ∀ n → ASC (2 + n)
 cycle n .revMap = ≤?-functorˡ (1 + n) ∘ Opposite proj₁-functor
 cycle n .hasAllPoints _ = tt
 
-preimages : ∀ {m n} → (Fin m → Fin n) → ASC n → ASC m
+preimages : (Fin m → Fin n) → ASC n → ASC m
 preimages f asc .revMap = asc .revMap ∘ Opposite (image-functor f)
 preimages f asc .hasAllPoints s rewrite l≡1 s refl .proj₂ rewrite image-single f (l≡1 s refl .proj₁) = asc .hasAllPoints _
 
-add : ∀ {k l} → CSet k l → ASC k → ASC k
-add s asc .revMap = ∨-functor ∘ asc .revMap ˢ ⊆?-functorˡ (_ , s)
-add _ asc .hasAllPoints s = T-≤ a≤a∨b (asc .hasAllPoints s)
+empty∈asc : (asc : ASC (suc n)) → empty _ ∈ asc
+empty∈asc asc = Has-⊆ asc empty⊂s (asc .hasAllPoints (single zero))
 
-addAll : ∀ {m k l} → (Fin m → CSet k l) → ASC k → ASC k
-addAll {zero} _ asc = asc
-addAll {suc _} ss asc = addAll (λ i → ss (suc i)) (add (ss zero) asc)
+l≤1⇒s∈asc : (s : CSet (suc n) l) (asc : ASC (suc n)) → l ℕ.≤ 1 → s ∈ asc
+l≤1⇒s∈asc s asc 0≤n rewrite l≡0 s refl = empty∈asc asc
+l≤1⇒s∈asc s asc (s≤s 0≤n) = asc .hasAllPoints s
+
+-- `images` is actually a misnomer, but I don't know
+-- what else to call it since it is sort of the opposite
+-- `preimages`
+-- images : ∀ {m n} → (Fin m → Fin n) → ASC m → ASC n
+-- images f asc .revMap = asc .revMap ∘ Opposite (preimage-functor f)
+-- images f asc .hasAllPoints s = {!!}
 
 infix 4 _⊑_
 _⊑_ : ∀ {n} → Rel (ASC n) 0ℓ
@@ -80,3 +90,18 @@ a ⊑ b = ∀ {l} s → has a (l , s) ≤ has b (l , s)
 infix 4 _≅_
 _≅_ : ∀ {n} → Rel (ASC n) 0ℓ
 a ≅ b = ∀ {l} s → has a (l , s) ≡ has b (l , s)
+
+⊑-refl : {a : ASC n} → a ⊑ a
+⊑-refl _ = ≤-refl
+
+⊑-antisym : {a b : ASC n} → a ⊑ b → b ⊑ a → a ≅ b
+⊑-antisym a⊑b b⊑a s = ≤-antisym (a⊑b s) (b⊑a s)
+
+⊑-trans : {a b c : ASC n} → a ⊑ b → b ⊑ c → a ⊑ c
+⊑-trans a⊑b b⊑c s = ≤-trans (a⊑b s) (b⊑c s)
+
+⊑-∈ : ∀ {a b} (s : CSet k l) → a ⊑ b → s ∈ a → s ∈ b
+⊑-∈ s a⊑b = T-≤ (a⊑b s)
+
+l≡0⇒s∈asc : (s : CSet (suc n) 0) (asc : ASC (suc n)) → s ∈ asc
+l≡0⇒s∈asc s asc = l≤1⇒s∈asc s asc 0≤n

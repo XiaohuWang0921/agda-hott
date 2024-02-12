@@ -73,3 +73,6 @@ A ⇒ B = record
   ; refl = λ _ → refl
   ; trig = λ g≈f g≈h x → trig (g≈f x) (g≈h x)
   }
+
+IsMonic : (A → B) → Set _
+IsMonic f = ∀ {x y} → f x ≡ f y → x ≡ y

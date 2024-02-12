@@ -3,7 +3,7 @@
 module Data.Vec.Base where
 
 open import Data.Nat.Base
-open import Data.Fin.Base hiding (cast; tsac)
+open import Data.Fin.Base
 open import Level
 open import Universe.Set
 open import Relation.Equality.Base
@@ -23,13 +23,6 @@ infixr 5 _∷_
 data Vec (A : Set a) : ℕ → Set a where
   []  : Vec A zero
   _∷_ : ∀ {n} (x : A) (xs : Vec A n) → Vec A (suc n)
-
-cast : ∀ {m n} → .(m ≡ n) → Vec A m → Vec A n
-cast {m = zero} {zero} _ [] = []
-cast {m = suc _} {suc _} sm≡sn (x ∷ xs) = x ∷ cast (suc-injective sm≡sn) xs
-
-tsac : ∀ {m n} → .(m ≡ n) → Vec A n → Vec A m
-tsac m≡n = cast (sym m≡n)
 
 -- head : Vec A (suc n) → A
 -- head = _$ zero
