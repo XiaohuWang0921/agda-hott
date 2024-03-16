@@ -11,8 +11,8 @@ open import Relation.Equality.Base hiding (cong)
 open import Data.Unit.Core
 open import Data.Bool.Base hiding (_≟_)
 -- open import Data.Vec.Base
-open import Data.Bool.Properties as Boolₚ
-open import Data.Nat.Properties as ℕₚ hiding (≤?-Reflects-≤; ≤?-≤; ≤-refl; ≤-antisym; ≤-trans; ≤-Cat; suc-monic)
+open import Data.Bool.Properties as Boolₚ hiding (≟-Reflects-≡)
+open import Data.Nat.Properties as ℕₚ hiding (≤?-Reflects-≤; ≤?-≤; ≤-refl; ≤-antisym; ≤-trans; ≤-Cat; suc-monic; ≟-Reflects-≡)
 open import Category.Base
 open import Level
 open import Category.Functor hiding (_∘_)
@@ -94,9 +94,35 @@ private
 ⊂-∋? (b≤c ∷ _) zero = b≤c
 ⊂-∋? (_ ∷ s⊂t) (suc i) = ⊂-∋? s⊂t i
 
+∋?-⊂ : (∀ i → (s ∋? i) ≤ (t ∋? i)) → s ⊂ t
+∋?-⊂ {s = []} {t = []} _ = []
+∋?-⊂ {s = _ ∷ _} {t = _ ∷ _} s≤t = s≤t zero ∷ ∋?-⊂ λ i → s≤t (suc i)
+
+∋?-≗ : (s ∋?_) ≗ (t ∋?_) → s ∼ t
+∋?-≗ s∋?≗t∋? = ⊂-antisym (∋?-⊂ λ i → ≡⇒≤ (s∋?≗t∋? i)) (∋?-⊂ λ i → ≡⇒≤ (sym (s∋?≗t∋? i)))
+
 tabulate-≤ : {f g : Fin k → Bool} → (∀ i → f i ≤ g i) → tabulate f ⊆ tabulate g
 tabulate-≤ {zero} _ = []
 tabulate-≤ {suc _} f≤g = f≤g zero ∷ tabulate-≤ λ i → f≤g (suc i)
+
+tabulate-cong : {f g : Fin k → Bool} → f ≗ g → tabulate f ≡ tabulate g
+tabulate-cong f≗g = ⊆-antisym (tabulate-≤ λ i → ≡⇒≤ (f≗g i)) (tabulate-≤ λ i → ≡⇒≤ (sym (f≗g i)))
+
+tabulate-false : tabulate {n} (const false) ≡ (0 , empty n)
+tabulate-false {0} = refl
+tabulate-false {suc _} = mapp id (false ∷_) =$= tabulate-false
+
+tabulate-true : tabulate {n} (const true) ≡ (n , full n)
+tabulate-true {0} = refl
+tabulate-true {suc _} = mapp suc (true ∷_) =$= tabulate-true
+
+∋?-tabulate : (f : Fin k → Bool) → (tabulate f .proj₂ ∋?_) ≗ f
+∋?-tabulate f zero = refl
+∋?-tabulate f (suc i) = ∋?-tabulate (f ∘ suc) i
+
+tabulate-∋? : (s : CSet k l) → tabulate (s ∋?_) ≡ (_ , s)
+tabulate-∋? [] = refl
+tabulate-∋? (b ∷ s) = mapp (inc b) (b ∷_) =$= tabulate-∋? s
 
 s⊂full : {s : CSet k l} → s ⊂ full k
 s⊂full {s = []} = []
@@ -199,13 +225,26 @@ empty-∌ : ∀ i → empty k ∌ i
 empty-∌ zero = tt
 empty-∌ (suc i) = empty-∌ i
 
-single-∋ : (i : Fin k) → single i ∋ i
-single-∋ zero = tt
-single-∋ (suc i) = single-∋ i
+∋?-single : (i j : Fin k) → (single i ∋? j) ≡ i ≟ j
+∋?-single zero zero = refl
+∋?-single zero (suc j) = F-false (empty-∌ j)
+∋?-single (suc _) zero = refl
+∋?-single (suc i) (suc j) = ∋?-single i j
 
-∋-single : ∀ (s : CSet k l) i → s ∋ i → single i ⊂ s
-∋-single (true ∷ s) zero _ = b≤b ∷ empty⊂s
-∋-single (_ ∷ s) (suc i) s∋i = false≤b ∷ ∋-single s i s∋i
+-- single-∋ : (i : Fin k) → single i ∋ i
+-- single-∋ zero = tt
+-- single-∋ (suc i) = single-∋ i
+
+-- single-∋-≡ : (i j : Fin k) → single i ∋ j → i ≡ j
+-- single-∋-≡ zero zero _ = refl
+-- single-∋-≡ zero (suc j) = ⊥-elim ∘ flip T-F (empty-∌ j)
+-- single-∋-≡ (suc i) (suc j) = (suc =$=_) ∘ single-∋-≡ i j
+
+∋⇒single : ∀ (s : CSet k l) i → s ∋ i → single i ⊂ s
+∋⇒single s i s∋i = ∋?-⊂ λ j → ≤-trans (≡⇒≤ (∋?-single i j)) (Reflects-→ (≟-Reflects-≡ i j) (id-Reflects-T (s ∋? j)) (flip iresp s∋i))
+
+∋?-preimage : ∀ (f : Fin k → Fin l) (s : CSet l m) i → (preimage f s .proj₂ ∋? i) ≡ (s ∋? f i)
+∋?-preimage f s = ∋?-tabulate ((s ∋?_) ∘ f)
 
 -- image-cong : ∀ {f g : Fin k → Fin l} (s : CSet k m) → f ≗ g → image f s ≡ image g s
 -- image-cong [] _ = refl
@@ -234,11 +273,21 @@ preimage-empty : (f : Fin k → Fin l) → preimage f (empty l) ≡ (0 , empty k
 preimage-empty {zero} _ = refl
 preimage-empty {suc _} f rewrite F-false (empty-∌ (f zero)) = mapp id (false ∷_) =$= preimage-empty (f ∘ suc)
 
+preimage-monic-single : ∀ {f : Fin k → Fin l} i → IsMonic f → preimage f (single i) .proj₁ ℕ.≤ 1
+preimage-monic-single {0} _ _ = 0≤n
+preimage-monic-single {suc k} {f = f} i f-monic with single i ∋? f zero | i ≟ f zero | ∋?-single i (f zero) | ≟-Reflects-≡ i (f zero)
+... | false | _ | _ | _ = preimage-monic-single i (suc-monic ∘ f-monic)
+... | true | true | refl | i≡f0 rewrite i≡f0 = s≤s (flip (pser ((ℕ._≤ 0) ∘ proj₁)) 0≤n (flip trans (tabulate-false {k}) (tabulate-cong λ j →
+  trans (∋?-single (f zero) _) (≤-antisym (Reflects-→ (≟-Reflects-≡ (f zero) _) (id-Reflects-T false) ((λ ()) ∘ f-monic)) false≤b))))
+-- ... | true = s≤s (flip (pser (ℕ._≤ 0)) 0≤n (proj₁ =$= (flip trans (tabulate-false {k}) (tabulate-cong λ j →
+--   F-false (F⊎T |> < id ⊹ (λ f-suc∈single →
+--     f-monic (trig (single-∋-≡ i (f zero) (pser T eq tt)) (single-∋-≡ i (f (suc j)) f-suc∈single)) |> λ ()) >)))))
+
 image-preimage : (f : Fin k → Fin l) (s : CSet l m) → image f (preimage f s .proj₂) ⊆ (m , s)
 image-preimage {zero} _ _ = empty⊂s
 image-preimage {suc _} f s with s ∋? f zero in eq
 ... | false = image-preimage (f ∘ suc) s
-... | true = ⊂-trans (∪-⊂ (∋-single s (f zero) (pser T eq tt)) (image-preimage (f ∘ suc) s)) (≡⇒⊆ ∪-idem)
+... | true = ⊂-trans (∪-⊂ (∋⇒single s (f zero) (pser T eq tt)) (image-preimage (f ∘ suc) s)) (≡⇒⊆ ∪-idem)
 
 preimage-image : (f : Fin k → Fin l) (s : CSet k m) → (m , s) ⊆ preimage f (image f s .proj₂)
 preimage-image f [] = []
@@ -246,7 +295,7 @@ preimage-image f (false ∷ s) = false≤b ∷ (preimage-image (f ∘ suc) s)
 preimage-image f (true ∷ s) =
   let headf = f zero
       tailf = f ∘ suc
-  in resp (_≤ (image f (true ∷ s) .proj₂ ∋? headf)) (T-true (single-∋ headf)) (⊂-∋? (s⊆s∪t {s = single headf}) headf) ∷
+  in resp (_≤ (image f (true ∷ s) .proj₂ ∋? headf)) (trans (∋?-single headf headf) (T-true (Reflects-T (≟-Reflects-≡ headf headf) refl))) (⊂-∋? (s⊆s∪t {s = single headf}) headf) ∷
      ⊂-trans (preimage-image tailf s) (tabulate-≤ λ i → ⊂-∋? (t⊆s∪t {t = image tailf s .proj₂} {s = single headf}) (tailf i))
 
 -- embed-irrel : {s t : Subset n} (a b : s ⊆ t) → embed a ≗ embed b
@@ -323,7 +372,7 @@ except-except {m = suc _} (true ∷ s) refl zero j = false ∷_ =$= trans (flip 
 except-except {m = suc _} (true ∷ s) refl (suc i) zero = false ∷_ =$= trans (subsub-fullʳ _) (sym (flip subsub _ =$= (subsub-fullʳ s)))
 except-except {m = suc (suc _)} (true ∷ s) refl (suc i) (suc j) = true ∷_ =$= (except-except s refl i j)
 
-⊂-except : {s : CSet k l} {t : CSet k m} → s ⊂ t → m ≡ n → Σ (l ≡ m) ((_≡ t) ∘ flip (resp (CSet k)) s) ⊎ Σ (Fin m) ((s ⊂_) ∘ except t)
+⊂-except : {s : CSet k l} {t : CSet k m} → s ⊂ t → m ≡ n → s ∼ t ⊎ Σ (Fin m) ((s ⊂_) ∘ except t)
 ⊂-except [] refl = inj₁ (refl , refl)
 ⊂-except (b≤b {false} ∷ s⊂t) refl with ⊂-except s⊂t refl
 ... | inj₁ (refl , refl) = inj₁ (refl , refl)

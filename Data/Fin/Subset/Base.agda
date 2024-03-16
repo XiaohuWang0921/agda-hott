@@ -2,7 +2,7 @@
 
 module Data.Fin.Subset.Base where
 
-open import Data.Nat.Base hiding (_≤_; _≤?_)
+open import Data.Nat.Base hiding (_≤_; _≤?_; _≟_)
 open import Data.Fin.Base
 --open import Data.Vec.Base using (Vec; []; _∷_)
 open import Data.Bool.Base hiding (_≟_)
@@ -122,6 +122,13 @@ image : (Fin k → Fin l) → CSet k m → Subset l
 image _ [] = 0 , empty _
 image f (false ∷ s) = image (f ∘ suc) s
 image f (true ∷ s) = single (f zero) ∪ image (f ∘ suc) s .proj₂
+
+-- `egami f s` is the greatest subset `t` such that
+-- `preimage f t ⊆ s`. It is the complement of the
+-- image of the complement of `s` under `f`. I don't
+-- know what else to name it.
+egami : (Fin k → Fin l) → CSet k m → Subset l
+egami f s = tabulate λ i → tabulate (i ≟_ ∘ f) ⊆? (_ , s)
 
 subsub : CSet k l → CSet l m → CSet k m
 subsub [] t = t

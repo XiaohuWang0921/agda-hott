@@ -103,6 +103,14 @@ Fin-suc {suc _} _ = _ , refl
 suc-monic : IsMonic (Fin.suc {n})
 suc-monic refl = refl
 
+inj+-monic : IsMonic (inj+ {m} n)
+inj+-monic {x = zero} {y = zero} _ = refl
+inj+-monic {x = suc _} {y = suc _} s≡s = suc =$= inj+-monic (suc-monic s≡s)
+
+ℕ+-monic : IsMonic (_ℕ+_ m {n})
+ℕ+-monic {0} = id
+ℕ+-monic {suc m} = ℕ+-monic {m} ∘ suc-monic
+
 ≟-Reflects-≡ : (i j : Fin n) → (i ≟ j) Reflects (i ≡ j)
 ≟-Reflects-≡ zero zero = refl
 ≟-Reflects-≡ zero (suc _) = zero≢suc
@@ -228,12 +236,12 @@ extract-naturalʳ : ∀ n → *-functorʳ n ⇉ Id
 extract-naturalʳ m .at _ = proj₂ ∘ extract m
 extract-naturalʳ m .isNatural _ i = proj₂ =$= extract∘combine (proj₁ (extract m i)) _
 
-punchIn-monic : ∀ i (j k : Fin n) → punchIn i j ≡ punchIn i k → j ≡ k
-punchIn-monic {suc _} zero _ _ sj≡sk = suc-monic sj≡sk
-punchIn-monic (suc _) zero zero _ = refl
-punchIn-monic (suc _) zero (suc _) 0≡s = (λ ()) $ 0≡s
-punchIn-monic (suc _) (suc _) zero s≡0 = (λ ()) $ s≡0
-punchIn-monic (suc i) (suc j) (suc k) eq = suc =$= punchIn-monic i j k (suc-monic eq)
+punchIn-monic : (i : Fin (suc n)) → IsMonic (punchIn i)
+punchIn-monic {suc _} zero sj≡sk = suc-monic sj≡sk
+punchIn-monic (suc _) {zero} {zero} _ = refl
+punchIn-monic (suc _) {zero} {suc _} 0≡s = (λ ()) $ 0≡s
+punchIn-monic (suc _) {suc _} {zero} s≡0 = (λ ()) $ s≡0
+punchIn-monic (suc i) {suc j} {suc k} eq = suc =$= punchIn-monic i (suc-monic eq)
 
 punchIn-≢ : ∀ i (j : Fin n) → i ≢ punchIn i j
 punchIn-≢ {suc _} zero _ ()

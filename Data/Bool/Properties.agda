@@ -80,8 +80,19 @@ Reflects-→ {false} {true} _ _ _ = f≤t
 Reflects-→ {true} {false} p ¬q f = ⊥-elim (¬q (f p))
 Reflects-→ {true} {true} _ _ _ = b≤b
 
+Reflects-F : ∀ {p} {P : Set p} → b Reflects P → (P → ⊥) → F b
+Reflects-F {false} _ _ = tt
+Reflects-F {true} p ¬p = ⊥-elim (¬p p)
+
+Reflects-T : ∀ {p} {P : Set p} → b Reflects P → P → T b
+Reflects-T {false} ¬p p = ⊥-elim (¬p p)
+Reflects-T {true} _ _ = tt
+
 T-Reflects : ∀ {p} {P : Set p} → b Reflects P → T b → P
 T-Reflects {b = true} p tt = p
+
+F-Reflects : ∀ {p} {P : Set p} → b Reflects P → F b → P → ⊥
+F-Reflects {b = false} ¬p tt = ¬p
 
 not-≤ : a ≤ b → not b ≤ not a
 not-≤ b≤b = b≤b
@@ -89,6 +100,9 @@ not-≤ f≤t = f≤t
 
 T-≤ : a ≤ b → T a → T b
 T-≤ {a} {b} = Reflects-≤ (id-Reflects-T a) (id-Reflects-T b)
+
+T-→ : (T a → T b) → a ≤ b
+T-→ {a} {b} = Reflects-→ (id-Reflects-T a) (id-Reflects-T b)
 
 ≤?-≤ : a ≤ b → c ≤ d → (b ≤? c) ≤ (a ≤? d)
 ≤?-≤ {false} {false} _ = const b≤b

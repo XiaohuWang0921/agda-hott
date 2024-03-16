@@ -20,6 +20,12 @@ infix 4 _≢_
 _≢_ : {A : Set a} → Rel A a
 x ≢ y = x ≡ y → ⊥
 
+IJ : {P : ∀ {w} → x ≡ w → Set b} (q : x ≡ y) → P refl → P q
+IJ refl pr = pr
+
+J : (P : ∀ {w} → x ≡ w → Set b) (q : x ≡ y) → P refl → P q
+J _ refl pr = pr
+
 trig : y ≡ x → y ≡ z → x ≡ z
 trig refl p = p
 

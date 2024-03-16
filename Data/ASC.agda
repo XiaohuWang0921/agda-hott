@@ -14,7 +14,7 @@ open import Universe.Setoid using (func)
 open import Data.Nat.Properties using (≤?-functorˡ; <?-functorˡ)
 open import Relation.Equality.Base
 open import Data.Unit.Core
-open import Universe.Set using (_≗_; flip)
+open import Universe.Set using (_≗_; flip; IsMonic; _|>_)
 open import Category.FunCat
 open import Data.Vec.Base
 open import Relation.Core
@@ -76,12 +76,10 @@ l≤1⇒s∈asc : (s : CSet (suc n) l) (asc : ASC (suc n)) → l ℕ.≤ 1 → s
 l≤1⇒s∈asc s asc 0≤n rewrite l≡0 s refl = empty∈asc asc
 l≤1⇒s∈asc s asc (s≤s 0≤n) = asc .hasAllPoints s
 
--- `images` is actually a misnomer, but I don't know
--- what else to call it since it is sort of the opposite
--- `preimages`
--- images : ∀ {m n} → (Fin m → Fin n) → ASC m → ASC n
--- images f asc .revMap = asc .revMap ∘ Opposite (preimage-functor f)
--- images f asc .hasAllPoints s = {!!}
+egamis : ∀ {m n} (f : Fin (suc m) → Fin n) → IsMonic f → ASC (suc m) → ASC n
+egamis f _ asc .revMap = asc .revMap ∘ Opposite (preimage-functor f)
+egamis f f-monic asc .hasAllPoints s =
+  l≤1⇒s∈asc (preimage f s .proj₂) asc (pser (λ t → preimage f t .proj₁ ℕ.≤ 1) (l≡1 s refl .proj₂) (preimage-monic-single (l≡1 s refl .proj₁) f-monic))
 
 infix 4 _⊑_
 _⊑_ : ∀ {n} → Rel (ASC n) 0ℓ

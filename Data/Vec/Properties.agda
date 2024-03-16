@@ -19,14 +19,14 @@ private
 
 module _ {x y : A} {xs ys : Vec A n} where
 
-  ∷-injective : x ∷ xs ≡ y ∷ ys → x ≡ y × xs ≡ ys
-  ∷-injective refl = refl , refl
+  ∷-monic : x ∷ xs ≡ y ∷ ys → x ≡ y × xs ≡ ys
+  ∷-monic refl = refl , refl
 
-  ∷-injectiveˡ : x ∷ xs ≡ y ∷ ys → x ≡ y
-  ∷-injectiveˡ refl = refl
+  ∷-monicˡ : x ∷ xs ≡ y ∷ ys → x ≡ y
+  ∷-monicˡ refl = refl
 
-  ∷-injectiveʳ : x ∷ xs ≡ y ∷ ys → xs ≡ ys
-  ∷-injectiveʳ refl = refl
+  ∷-monicʳ : x ∷ xs ≡ y ∷ ys → xs ≡ ys
+  ∷-monicʳ refl = refl
 
 tabulate-cong : {f g : Fin n → A} → f ≗ g → tabulate f ≡ tabulate g
 tabulate-cong {0} _ = refl

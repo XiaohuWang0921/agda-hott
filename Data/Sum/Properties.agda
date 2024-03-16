@@ -22,6 +22,15 @@ private
     E : Set e
     F : Set f
 
+inj₁-monic : {x y : A} → inj₁ {B = B} x ≡ inj₁ y → x ≡ y
+inj₁-monic refl = refl
+
+inj₂-monic : {x y : A} → inj₂ {A = A} x ≡ inj₂ y → x ≡ y
+inj₂-monic refl = refl
+
+inj₁≢inj₂ : {x : A} {y : B} → inj₁ x ≢ inj₂ y
+inj₁≢inj₂ ()
+
 <⊹>-cong : {f g : A → C} {h i : B → C} → f ≗ g → h ≗ i → < f ⊹ h > ≗ < g ⊹ i >
 <⊹>-cong f≗g _ (inj₁ x) = f≗g x
 <⊹>-cong _ h≗i (inj₂ y) = h≗i y

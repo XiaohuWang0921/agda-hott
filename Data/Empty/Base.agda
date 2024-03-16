@@ -4,5 +4,5 @@ module Data.Empty.Base where
 
 data ⊥ : Set where
 
-⊥-elim : ∀ {ℓ} {A : Set ℓ} → .⊥ → A
+⊥-elim : ∀ {ℓ} {A : Set ℓ} → ⊥ → A
 ⊥-elim ()
